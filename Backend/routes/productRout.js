@@ -1,14 +1,64 @@
-import express from "express";
 import upload from "../middleware/upload.js";
+const express = require("express");
+
+const {
+  createProduct,
+  getAllProducts,
+  getProductById,
+  updateProduct,
+  deleteProduct,
+} = require("../controllers/productController");
+
+const {
+    isAuthenticated,
+    isAdmin
+} = require("../midllware/isAuthenticated");
+const isAdmin = require("../middleware/isAdmin");
 
 const router = express.Router();
 
-router.post("/upload", upload.single("image"), (req, res) => {
 
-  res.json({
-    message: "Image uploaded successfully",
-    imageUrl: req.file.path,
-  });
-});
+// ===============================
+// Admin Product Routes
+// ===============================
 
-export default router;
+// Create Product
+router.post(
+    "/create",
+    isAuthenticated,
+    isAdmin,
+    upload.single("image"),
+    createProduct
+);
+
+// Get All Products
+router.get(
+    "/all",
+    getAllProducts
+);
+
+// Get Single Product
+router.get(
+    "/:id",
+    getProductById
+);
+
+// Update Product
+router.put(
+    "/update/:id",
+    isAuthenticated,
+    isAdmin,
+    upload.single("image"),
+    updateProduct
+);
+
+// Delete Product
+router.delete(
+    "/delete/:id",
+    isAuthenticated,
+    isAdmin,
+    deleteProduct
+);
+
+
+module.exports = router;
