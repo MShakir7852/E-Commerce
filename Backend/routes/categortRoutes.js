@@ -1,4 +1,4 @@
-import upload from "../middleware/upload.js";
+const upload = require("../midllware/upload.js");
 const express = require("express");
 
 const {

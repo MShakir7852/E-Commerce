@@ -4,7 +4,9 @@ import Footer from '@/components/Footer'
 import Hero from './Hero'
 
 
+
 function Home() {
+
   return (
   <section>
       <Hero/>

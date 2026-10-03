@@ -7,8 +7,7 @@ const createProduct = async (req, res) => {
             description,
             price,
             discountPrice,
-            stock,
-            category
+            stock
         } = req.body;
         const productImage = req.file.path;
         const existingProduct = await Product.findOne({ name });
@@ -23,7 +22,6 @@ const createProduct = async (req, res) => {
             price,
             discountPrice,
             stock,
-            category,
             productImage
         });
 

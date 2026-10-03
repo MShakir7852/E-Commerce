@@ -11,6 +11,8 @@ import Footer from './components/Footer';
 import Verifyotp from './pages/verifyotp';
 import EmailForForgetPassword from './pages/EmailForForgetPassword';
 import NewPassword from './pages/newPassword';
+import ProductComponenet from './pages/productsComponenet'
+import Product from './pages/product'
 
 
 
@@ -29,7 +31,8 @@ function App() {
           <Route path='/verify-Email' element={<EmailConfirm />} />
           <Route path='/verify/:token' element={<Verifyemail />} />
           <Route path='/error' element={<Faildemailverification />} />
-
+          <Route path='/products' element={<ProductComponenet />} />
+          <Route path='/product/:id' element={<Product />} />
 
         </Routes>
         <Footer />

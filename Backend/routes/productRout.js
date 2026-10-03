@@ -1,4 +1,5 @@
-import upload from "../middleware/upload.js";
+
+const upload = require("../midllware/upload.js");
 const express = require("express");
 
 const {
@@ -13,7 +14,7 @@ const {
     isAuthenticated,
     isAdmin
 } = require("../midllware/isAuthenticated");
-const isAdmin = require("../middleware/isAdmin");
+
 
 const router = express.Router();
 
@@ -27,7 +28,7 @@ router.post(
     "/create",
     isAuthenticated,
     isAdmin,
-    upload.single("image"),
+    upload.single("productImage"),
     createProduct
 );
 
@@ -48,7 +49,7 @@ router.put(
     "/update/:id",
     isAuthenticated,
     isAdmin,
-    upload.single("image"),
+    upload.single("productImage"),
     updateProduct
 );
 
