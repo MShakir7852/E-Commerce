@@ -1,10 +1,22 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import {
+    Search,
+    SlidersHorizontal,
+    X,
+    ChevronDown,
+} from "lucide-react";
 
 function ProductsComponenet() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    // Search & Filters
+    const [search, setSearch] = useState("");
+    const [categoryFilter, setCategoryFilter] = useState("all");
+    const [priceFilter, setPriceFilter] = useState("all");
+    const [stockFilter, setStockFilter] = useState("all");
 
     const fetchProducts = async () => {
         try {
@@ -30,11 +42,95 @@ function ProductsComponenet() {
         fetchProducts();
     }, []);
 
+    // Get unique categories
+    const categories = useMemo(() => {
+        return [
+            ...new Set(
+                products
+                    .map((product) => product.category)
+                    .filter(Boolean)
+            ),
+        ];
+    }, [products]);
+
+    // Filter products
+    const filteredProducts = useMemo(() => {
+        return products.filter((product) => {
+            const price = Number(product.price) || 0;
+            const discountPrice = Number(product.discountPrice) || 0;
+
+            // Search
+            const searchText = search.toLowerCase().trim();
+
+            const matchesSearch =
+                !searchText ||
+                product.name?.toLowerCase().includes(searchText) ||
+                product.description?.toLowerCase().includes(searchText) ||
+                product.category?.toLowerCase().includes(searchText);
+
+            // Category
+            const matchesCategory =
+                categoryFilter === "all" ||
+                product.category === categoryFilter;
+
+            // Price
+            let matchesPrice = true;
+
+            if (priceFilter === "under50") {
+                matchesPrice = discountPrice < 50;
+            } else if (priceFilter === "50to100") {
+                matchesPrice =
+                    discountPrice >= 50 && discountPrice <= 100;
+            } else if (priceFilter === "100to200") {
+                matchesPrice =
+                    discountPrice > 100 && discountPrice <= 200;
+            } else if (priceFilter === "above200") {
+                matchesPrice = discountPrice > 200;
+            }
+
+            // Stock
+            let matchesStock = true;
+
+            if (stockFilter === "instock") {
+                matchesStock = product.stock > 0;
+            } else if (stockFilter === "outofstock") {
+                matchesStock = product.stock <= 0;
+            }
+
+            return (
+                matchesSearch &&
+                matchesCategory &&
+                matchesPrice &&
+                matchesStock
+            );
+        });
+    }, [
+        products,
+        search,
+        categoryFilter,
+        priceFilter,
+        stockFilter,
+    ]);
+
+    const clearFilters = () => {
+        setSearch("");
+        setCategoryFilter("all");
+        setPriceFilter("all");
+        setStockFilter("all");
+    };
+
+    const hasFilters =
+        search ||
+        categoryFilter !== "all" ||
+        priceFilter !== "all" ||
+        stockFilter !== "all";
+
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-center">
                     <div className="w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+
                     <p className="mt-4 text-gray-600 font-medium">
                         Loading products...
                     </p>
@@ -47,7 +143,8 @@ function ProductsComponenet() {
         <section className="bg-gray-50 min-h-screen py-12 px-4 sm:px-6 lg:px-12">
 
             {/* Header */}
-            <div className="max-w-7xl mx-auto mb-10">
+            <div className="max-w-7xl mx-auto mb-8">
+
                 <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
 
                     <div>
@@ -65,26 +162,224 @@ function ProductsComponenet() {
                     </div>
 
                     <span className="text-sm text-gray-500">
-                        {products.length} Products
+                        {filteredProducts.length} of {products.length} Products
                     </span>
 
                 </div>
             </div>
 
-            {/* Products */}
+
+            {/* ================= SEARCH & FILTER ================= */}
+
+            <div className="max-w-7xl mx-auto mb-10">
+
+                <div className="relative overflow-hidden rounded-3xl border border-white/60 bg-white/70 backdrop-blur-xl shadow-xl shadow-gray-200/50 p-5">
+
+                    {/* Subtle background */}
+                    <div className="absolute -top-20 -right-20 w-40 h-40 bg-blue-200/20 rounded-full blur-3xl"></div>
+
+                    <div className="relative">
+
+                        {/* Search */}
+                        <div className="flex flex-col lg:flex-row gap-4">
+
+                            <div className="relative flex-1">
+
+                                <Search
+                                    size={20}
+                                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                                />
+
+                                <input
+                                    type="text"
+                                    placeholder="Search products, categories..."
+                                    value={search}
+                                    onChange={(e) =>
+                                        setSearch(e.target.value)
+                                    }
+                                    className="w-full h-12 pl-12 pr-12 rounded-2xl border border-gray-200 bg-white/80 backdrop-blur-sm text-gray-800 placeholder:text-gray-400 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                />
+
+                                {search && (
+                                    <button
+                                        onClick={() => setSearch("")}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition"
+                                    >
+                                        <X size={18} />
+                                    </button>
+                                )}
+
+                            </div>
+
+                            <button
+                                type="button"
+                                className="h-12 px-7 rounded-2xl bg-gray-900 text-white font-semibold flex items-center justify-center gap-2 hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300"
+                            >
+                                <Search size={18} />
+                                Search
+                            </button>
+
+                        </div>
+
+
+                        {/* Filters */}
+                        <div className="mt-5 pt-5 border-t border-gray-200/70">
+
+                            <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+
+                                {/* Filter Heading */}
+                                <div className="flex items-center gap-2 text-gray-700 font-semibold shrink-0">
+                                    <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+                                        <SlidersHorizontal
+                                            size={18}
+                                            className="text-blue-600"
+                                        />
+                                    </div>
+
+                                    <span>Filters</span>
+                                </div>
+
+
+                                {/* Category */}
+                                <div className="relative flex-1">
+
+                                    <select
+                                        value={categoryFilter}
+                                        onChange={(e) =>
+                                            setCategoryFilter(e.target.value)
+                                        }
+                                        className="appearance-none w-full h-11 px-4 pr-10 rounded-xl border border-gray-200 bg-white/80 text-gray-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition cursor-pointer"
+                                    >
+                                        <option value="all">
+                                            All Categories
+                                        </option>
+
+                                        {categories.map((category) => (
+                                            <option
+                                                key={category}
+                                                value={category}
+                                            >
+                                                {category}
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    <ChevronDown
+                                        size={17}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                                    />
+
+                                </div>
+
+
+                                {/* Price */}
+                                <div className="relative flex-1">
+
+                                    <select
+                                        value={priceFilter}
+                                        onChange={(e) =>
+                                            setPriceFilter(e.target.value)
+                                        }
+                                        className="appearance-none w-full h-11 px-4 pr-10 rounded-xl border border-gray-200 bg-white/80 text-gray-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition cursor-pointer"
+                                    >
+                                        <option value="all">
+                                            All Prices
+                                        </option>
+
+                                        <option value="under50">
+                                            Under $50
+                                        </option>
+
+                                        <option value="50to100">
+                                            $50 - $100
+                                        </option>
+
+                                        <option value="100to200">
+                                            $100 - $200
+                                        </option>
+
+                                        <option value="above200">
+                                            Above $200
+                                        </option>
+                                    </select>
+
+                                    <ChevronDown
+                                        size={17}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                                    />
+
+                                </div>
+
+
+                                {/* Stock */}
+                                <div className="relative flex-1">
+
+                                    <select
+                                        value={stockFilter}
+                                        onChange={(e) =>
+                                            setStockFilter(e.target.value)
+                                        }
+                                        className="appearance-none w-full h-11 px-4 pr-10 rounded-xl border border-gray-200 bg-white/80 text-gray-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition cursor-pointer"
+                                    >
+                                        <option value="all">
+                                            All Products
+                                        </option>
+
+                                        <option value="instock">
+                                            In Stock
+                                        </option>
+
+                                        <option value="outofstock">
+                                            Out of Stock
+                                        </option>
+                                    </select>
+
+                                    <ChevronDown
+                                        size={17}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                                    />
+
+                                </div>
+
+
+                                {/* Clear */}
+                                {hasFilters && (
+                                    <button
+                                        onClick={clearFilters}
+                                        className="h-11 px-5 rounded-xl border border-gray-200 bg-white text-gray-600 font-semibold hover:border-red-200 hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <X size={16} />
+                                        Clear
+                                    </button>
+                                )}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+
+            {/* ================= PRODUCTS ================= */}
+
             <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-7">
 
-                {products.length > 0 ? (
-                    products.map((product) => {
+                {filteredProducts.length > 0 ? (
+
+                    filteredProducts.map((product) => {
 
                         const price = Number(product.price) || 0;
+
                         const discountPrice =
                             Number(product.discountPrice) || 0;
 
                         const discount =
                             price > 0
                                 ? Math.round(
-                                      ((price - discountPrice) / price) * 100
+                                      ((price - discountPrice) / price) *
+                                          100
                                   )
                                 : 0;
 
@@ -94,9 +389,10 @@ function ProductsComponenet() {
                                 key={product._id}
                                 className="group"
                             >
+
                                 <div className="relative bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
 
-                                    {/* Image Section */}
+                                    {/* Image */}
                                     <div className="relative h-72 bg-gray-100 overflow-hidden">
 
                                         <img
@@ -105,33 +401,43 @@ function ProductsComponenet() {
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                         />
 
-                                        {/* Overlay */}
                                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition duration-500"></div>
 
-                                        {/* Discount Badge */}
+
+                                        {/* Discount */}
                                         {discount > 0 && (
                                             <div className="absolute top-4 left-4">
+
                                                 <span className="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
                                                     {discount}% OFF
                                                 </span>
+
                                             </div>
                                         )}
 
+
                                         {/* Wishlist */}
                                         <button
-                                            onClick={(e) => e.preventDefault()}
+                                            onClick={(e) =>
+                                                e.preventDefault()
+                                            }
                                             className="absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-600 hover:text-red-500 hover:scale-110 transition-all shadow-md"
                                         >
                                             ♥
                                         </button>
 
+
                                         {/* Quick View */}
                                         <div className="absolute bottom-4 left-4 right-4 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+
                                             <div className="bg-white/95 backdrop-blur text-gray-900 text-center py-2.5 rounded-xl font-semibold shadow-lg">
                                                 Quick View
                                             </div>
+
                                         </div>
+
                                     </div>
+
 
                                     {/* Product Information */}
                                     <div className="p-5">
@@ -141,18 +447,22 @@ function ProductsComponenet() {
                                             {product.category || "Product"}
                                         </p>
 
-                                        {/* Product Name */}
+
+                                        {/* Name */}
                                         <h3 className="text-lg font-bold text-gray-900 truncate group-hover:text-blue-600 transition">
                                             {product.name}
                                         </h3>
+
 
                                         {/* Description */}
                                         <p className="text-sm text-gray-500 mt-2 line-clamp-2 min-h-[40px]">
                                             {product.description}
                                         </p>
 
+
                                         {/* Rating */}
                                         <div className="flex items-center gap-2 mt-4">
+
                                             <div className="flex text-yellow-400 text-sm">
                                                 ★★★★★
                                             </div>
@@ -160,50 +470,75 @@ function ProductsComponenet() {
                                             <span className="text-xs text-gray-500">
                                                 ({product.numReviews || 0} Reviews)
                                             </span>
+
                                         </div>
+
 
                                         {/* Stock */}
                                         <div className="mt-4">
+
                                             {product.stock > 0 ? (
+
                                                 <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-600 border border-green-200 px-3 py-1 rounded-full text-xs font-semibold">
+
                                                     <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+
                                                     In Stock
+
                                                 </span>
+
                                             ) : (
+
                                                 <span className="inline-flex items-center gap-1.5 bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-full text-xs font-semibold">
+
                                                     <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+
                                                     Out of Stock
+
                                                 </span>
+
                                             )}
+
                                         </div>
+
 
                                         {/* Price */}
                                         <div className="flex items-center justify-between mt-5">
 
                                             <div className="flex items-center gap-2">
+
                                                 <span className="text-2xl font-bold text-gray-900">
                                                     ${discountPrice.toFixed(2)}
                                                 </span>
 
                                                 {price > discountPrice && (
+
                                                     <span className="text-sm text-gray-400 line-through">
                                                         ${price.toFixed(2)}
                                                     </span>
+
                                                 )}
+
                                             </div>
 
+
                                             {discount > 0 && (
+
                                                 <span className="text-xs font-semibold text-green-600">
                                                     Save {discount}%
                                                 </span>
+
                                             )}
 
                                         </div>
 
+
                                         {/* Add To Cart */}
                                         <button
                                             disabled={product.stock <= 0}
-                                            onClick={(e) => e.preventDefault()}
+                                            onClick={(e) =>
+                                                e.preventDefault()
+                                            }
                                             className={`w-full mt-5 py-3 rounded-xl font-semibold transition-all duration-300 ${
                                                 product.stock > 0
                                                     ? "bg-gray-900 text-white hover:bg-blue-600 hover:shadow-lg"
@@ -216,25 +551,44 @@ function ProductsComponenet() {
                                         </button>
 
                                     </div>
+
                                 </div>
+
                             </Link>
                         );
                     })
+
                 ) : (
+
                     <div className="col-span-full text-center py-20">
-                        <div className="text-5xl mb-4">🛍️</div>
+
+                        <div className="text-5xl mb-4">
+                            🛍️
+                        </div>
 
                         <h2 className="text-2xl font-bold text-gray-800">
                             No Products Found
                         </h2>
 
                         <p className="text-gray-500 mt-2">
-                            There are currently no products available.
+                            Try changing your search or filters.
                         </p>
+
+                        {hasFilters && (
+                            <button
+                                onClick={clearFilters}
+                                className="mt-5 px-6 py-2.5 rounded-xl bg-gray-900 text-white font-semibold hover:bg-blue-600 transition"
+                            >
+                                Clear Filters
+                            </button>
+                        )}
+
                     </div>
+
                 )}
 
             </div>
+
         </section>
     );
 }
