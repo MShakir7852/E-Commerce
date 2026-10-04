@@ -19,14 +19,15 @@ const productSchema = new mongoose.Schema({
         required: true,
         default: "0"
     },
-      stock: {
+    stock: {
         type: String,
         required: true,
         default: "0"
     },
     category: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Category",
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Category",
+        required: true
     },
   
     isActive: {
