@@ -6,19 +6,19 @@ const Category = require("../models/categoryModel.js");
 // ===============================
 const createCategory = async (req, res) => {
     try {
-        const image = req.file ? req.file.path : null;
-        const { name, slug, description } = req.body;
+        const CategoryImage = req.file ? req.file.path : null;
+        const { name, description } = req.body;
 
-        if (!name || !slug) {
+        if (!name || !description) {
             return res.status(400).json({
                 success: false,
-                message: "Category name and slug are required",
+                message: "Category name and description are required",
             });
         }
 
         // Check duplicate category
         const existingCategory = await Category.findOne({
-            $or: [{ name }, { slug }],
+            $or: [{ name }, { description }],
         });
 
         if (existingCategory) {
@@ -30,9 +30,8 @@ const createCategory = async (req, res) => {
 
         const category = await Category.create({
             name,
-            slug,
             description,
-            image,
+            CategoryImage,
         });
 
         return res.status(201).json({
@@ -110,8 +109,8 @@ const updateCategory = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const image = req.file ? req.file.path : null;
-        const { name, slug, description, isActive } = req.body;
+        const CategoryImage = req.file ? req.file.path : null;
+        const { name, description, isActive } = req.body;
 
         const category = await Category.findById(id);
 
@@ -123,9 +122,8 @@ const updateCategory = async (req, res) => {
         }
 
         category.name = name ?? category.name;
-        category.slug = slug ?? category.slug;
         category.description = description ?? category.description;
-        category.image = image ?? category.image;
+        category.CategoryImage = CategoryImage ?? category.CategoryImage;
         category.isActive = isActive ?? category.isActive;
 
         await category.save();

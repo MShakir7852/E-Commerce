@@ -9,20 +9,12 @@ const categorySchema = new mongoose.Schema(
             trim: true,
         },
 
-        slug: {
-            type: String,
-            required: true,
-            unique: true,
-            lowercase: true,
-            trim: true,
-        },
-
         description: {
             type: String,
             trim: true,
         },
 
-        image: {
+        CategoryImage: {
             type: String,
             default: "",
         },
@@ -40,4 +32,3 @@ const categorySchema = new mongoose.Schema(
 const Category = mongoose.model("Category", categorySchema);
 
 module.exports = Category;
-

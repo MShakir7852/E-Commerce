@@ -34,7 +34,7 @@ router.post(
     "/create",
     isAuthenticated,
     isAdmin,
-    upload.single("image"),
+    upload.single("CategoryImage"),
     createCategory
 );
 
@@ -43,7 +43,7 @@ router.put(
     "/update/:id",
     isAuthenticated,
     isAdmin,
-    upload.single("image"),
+    upload.single("CategoryImage"),
     updateCategory
 );
 
