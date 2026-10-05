@@ -1,6 +1,9 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import { ShoppingCart, Check } from "lucide-react";
+import { toast } from "sonner";
 
 function Product() {
     const { id } = useParams();
@@ -22,10 +25,14 @@ function Product() {
                 `http://localhost:3000/api/products/${id}`
             );
 
-            setProduct(response.data.product);
-            setSelectedImage(response.data.product.productImage);
+            const fetchedProduct = response.data.product;
+
+            setProduct(fetchedProduct);
+            setSelectedImage(fetchedProduct.productImage);
         } catch (error) {
             console.error("Error fetching product:", error);
+
+            toast.error("Unable to load product");
         }
     };
 
@@ -37,8 +44,14 @@ function Product() {
     // Quantity
     // -----------------------------
     const increaseQuantity = () => {
-        if (product && quantity < product.stock) {
+        if (!product) return;
+
+        if (quantity < Number(product.stock)) {
             setQuantity((prev) => prev + 1);
+        } else {
+            toast.warning(
+                `Only ${product.stock} items are available in stock`
+            );
         }
     };
 
@@ -52,43 +65,127 @@ function Product() {
     // Add To Cart
     // -----------------------------
     const addToCart = () => {
-        if (!product || product.stock <= 0) return;
+        if (!product) {
+            toast.error("Product not found");
+            return;
+        }
+
+        const stock = Number(product.stock) || 0;
+
+        if (stock <= 0) {
+            toast.error("This product is out of stock");
+            return;
+        }
+
+        if (quantity > stock) {
+            toast.error(`Only ${stock} items are available in stock`);
+            return;
+        }
+
+        const productId = product._id || product.id;
+
+        const price = Number(product.price) || 0;
+
+        const discountPrice =
+            Number(product.discountPrice) || price;
 
         const cartItem = {
-            productId: product._id || product.id,
+            productId: productId,
             name: product.name,
             image: product.productImage,
-            price: Number(product.discountPrice),
-            quantity,
+            price: discountPrice,
+            originalPrice: price,
+            quantity: quantity,
             color: selectedColor,
             size: selectedSize,
         };
 
-        const existingCart =
-            JSON.parse(localStorage.getItem("cart")) || [];
+        try {
+            const existingCart =
+                JSON.parse(localStorage.getItem("cart")) || [];
 
-        const existingItemIndex = existingCart.findIndex(
-            (item) =>
-                item.productId === cartItem.productId &&
-                item.color === cartItem.color &&
-                item.size === cartItem.size
-        );
+            // Find same product + same color + same size
+            const existingItemIndex = existingCart.findIndex(
+                (item) =>
+                    item.productId === cartItem.productId &&
+                    item.color === cartItem.color &&
+                    item.size === cartItem.size
+            );
 
-        if (existingItemIndex !== -1) {
-            existingCart[existingItemIndex].quantity += quantity;
-        } else {
-            existingCart.push(cartItem);
+            // -----------------------------
+            // Existing Item
+            // -----------------------------
+            if (existingItemIndex !== -1) {
+                const existingQuantity =
+                    Number(
+                        existingCart[existingItemIndex].quantity
+                    ) || 0;
+
+                const newQuantity =
+                    existingQuantity + quantity;
+
+                // Check stock
+                if (newQuantity > stock) {
+                    toast.error(
+                        `Only ${stock} items are available in stock`
+                    );
+
+                    return;
+                }
+
+                existingCart[existingItemIndex] = {
+                    ...existingCart[existingItemIndex],
+                    name: product.name,
+                    image: product.productImage,
+                    price: discountPrice,
+                    originalPrice: price,
+                    quantity: newQuantity,
+                };
+
+                toast.success("Cart quantity updated", {
+                    description: `${product.name} • ${selectedColor} • ${selectedSize}`,
+                });
+            }
+
+            // -----------------------------
+            // New Item
+            // -----------------------------
+            else {
+                existingCart.push(cartItem);
+
+                toast.success("Product added to cart", {
+                    description: `${product.name} • ${selectedColor} • ${selectedSize}`,
+                });
+            }
+
+            // Save Cart
+            localStorage.setItem(
+                "cart",
+                JSON.stringify(existingCart)
+            );
+
+            // Notify Navbar / Cart component
+            window.dispatchEvent(
+                new Event("cartUpdated")
+            );
+
+            // Button success state
+            setAdded(true);
+
+            setTimeout(() => {
+                setAdded(false);
+            }, 2000);
+
+        } catch (error) {
+            console.error(
+                "Add to cart error:",
+                error
+            );
+
+            toast.error(
+                "Something went wrong while adding to cart"
+            );
         }
-
-        localStorage.setItem("cart", JSON.stringify(existingCart));
-
-        setAdded(true);
-
-        setTimeout(() => {
-            setAdded(false);
-        }, 2000);
-
-        window.dispatchEvent(new Event("cartUpdated"));
     };
 
     // -----------------------------
@@ -109,15 +206,19 @@ function Product() {
     }
 
     const price = Number(product.price) || 0;
-    const discountPrice = Number(product.discountPrice) || price;
+
+    const discountPrice =
+        Number(product.discountPrice) || price;
 
     const discountPercentage =
         price > 0
-            ? Math.round(((price - discountPrice) / price) * 100)
+            ? Math.round(
+                  ((price - discountPrice) / price) * 100
+              )
             : 0;
 
     // -----------------------------
-    // Theme based on selected color
+    // Theme
     // -----------------------------
     const theme = {
         yellow: {
@@ -176,9 +277,7 @@ function Product() {
                 {/* Top Content */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 p-5 sm:p-8 lg:p-12">
 
-                    {/* =========================
-                        LEFT - PRODUCT IMAGE
-                    ========================== */}
+                    {/* LEFT - PRODUCT IMAGE */}
                     <div>
 
                         {/* Image Area */}
@@ -196,7 +295,9 @@ function Product() {
                             {/* Wishlist */}
                             <button
                                 onClick={() =>
-                                    setIsWishlisted(!isWishlisted)
+                                    setIsWishlisted(
+                                        !isWishlisted
+                                    )
                                 }
                                 className="
                                     absolute
@@ -222,14 +323,19 @@ function Product() {
                                             : "text-gray-400"
                                     }`}
                                 >
-                                    {isWishlisted ? "♥" : "♡"}
+                                    {isWishlisted
+                                        ? "♥"
+                                        : "♡"}
                                 </span>
                             </button>
 
                             {/* Main Image */}
                             <div className="h-full sm:h-[450px] flex items-center justify-center">
                                 <img
-                                    src={selectedImage || product.productImage}
+                                    src={
+                                        selectedImage ||
+                                        product.productImage
+                                    }
                                     alt={product.name}
                                     className="
                                         h-full
@@ -247,51 +353,56 @@ function Product() {
                         {/* Image Thumbnails */}
                         <div className="flex gap-3 mt-5 overflow-x-auto pb-2">
 
-                            {[1, 2, 3, 4].map((item) => (
-                                <button
-                                    key={item}
-                                    onClick={() =>
-                                        setSelectedImage(
-                                            product.productImage
-                                        )
-                                    }
-                                    className={`
-                                        min-w-[75px]
-                                        h-[75px]
-                                        sm:w-[90px]
-                                        sm:h-[90px]
-                                        bg-white
-                                        rounded-xl
-                                        border-2
-                                        p-2
-                                        transition
-                                        ${
-                                            selectedImage ===
-                                            product.productImage
-                                                ? "border-blue-500 shadow-md"
-                                                : "border-gray-200 hover:border-gray-400"
+                            {[1, 2, 3, 4].map(
+                                (item) => (
+                                    <button
+                                        key={item}
+                                        onClick={() =>
+                                            setSelectedImage(
+                                                product.productImage
+                                            )
                                         }
-                                    `}
-                                >
-                                    <img
-                                        src={product.productImage}
-                                        alt={product.name}
-                                        className="w-full h-full object-contain rounded-lg"
-                                    />
-                                </button>
-                            ))}
+                                        className={`
+                                            min-w-[75px]
+                                            h-[75px]
+                                            sm:w-[90px]
+                                            sm:h-[90px]
+                                            bg-white
+                                            rounded-xl
+                                            border-2
+                                            p-2
+                                            transition
+                                            ${
+                                                selectedImage ===
+                                                product.productImage
+                                                    ? "border-blue-500 shadow-md"
+                                                    : "border-gray-200 hover:border-gray-400"
+                                            }
+                                        `}
+                                    >
+                                        <img
+                                            src={
+                                                product.productImage
+                                            }
+                                            alt={
+                                                product.name
+                                            }
+                                            className="w-full h-full object-contain rounded-lg"
+                                        />
+                                    </button>
+                                )
+                            )}
 
                         </div>
                     </div>
 
-                    {/* =========================
-                        RIGHT - PRODUCT INFO
-                    ========================== */}
+                    {/* RIGHT - PRODUCT INFO */}
                     <div className="flex flex-col justify-center">
 
                         {/* Category */}
                         <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                            {product.category || "Premium Collection"}
+                            {product.category ||
+                                "Premium Collection"}
                         </span>
 
                         {/* Product Name */}
@@ -307,7 +418,9 @@ function Product() {
                             </div>
 
                             <span className="text-sm text-gray-500">
-                                {product.numReviews || 0} Reviews
+                                {product.numReviews ||
+                                    0}{" "}
+                                Reviews
                             </span>
 
                         </div>
@@ -323,7 +436,10 @@ function Product() {
                             <span
                                 className={`text-3xl sm:text-4xl font-extrabold ${currentTheme.accent}`}
                             >
-                                ${discountPrice.toFixed(2)}
+                                $
+                                {discountPrice.toFixed(
+                                    2
+                                )}
                             </span>
 
                             {discountPrice < price && (
@@ -339,7 +455,10 @@ function Product() {
                             <div className="mt-2">
                                 <span className="inline-flex items-center bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold">
                                     You save $
-                                    {(price - discountPrice).toFixed(2)}
+                                    {(
+                                        price -
+                                        discountPrice
+                                    ).toFixed(2)}
                                 </span>
                             </div>
                         )}
@@ -347,9 +466,7 @@ function Product() {
                         {/* Divider */}
                         <div className="border-t border-gray-200 my-6"></div>
 
-                        {/* =========================
-                            COLOR
-                        ========================== */}
+                        {/* COLOR */}
                         <div>
 
                             <div className="flex items-center gap-2 mb-3">
@@ -366,10 +483,11 @@ function Product() {
 
                             <div className="flex gap-4">
 
-                                {/* Yellow */}
                                 <button
                                     onClick={() =>
-                                        setSelectedColor("yellow")
+                                        setSelectedColor(
+                                            "yellow"
+                                        )
                                     }
                                     className={`
                                         w-10
@@ -380,7 +498,8 @@ function Product() {
                                         transition
                                         hover:scale-110
                                         ${
-                                            selectedColor === "yellow"
+                                            selectedColor ===
+                                            "yellow"
                                                 ? "border-gray-900 scale-110 shadow-lg"
                                                 : "border-white"
                                         }
@@ -388,10 +507,11 @@ function Product() {
                                     aria-label="Yellow"
                                 />
 
-                                {/* Blue */}
                                 <button
                                     onClick={() =>
-                                        setSelectedColor("blue")
+                                        setSelectedColor(
+                                            "blue"
+                                        )
                                     }
                                     className={`
                                         w-10
@@ -402,7 +522,8 @@ function Product() {
                                         transition
                                         hover:scale-110
                                         ${
-                                            selectedColor === "blue"
+                                            selectedColor ===
+                                            "blue"
                                                 ? "border-gray-900 scale-110 shadow-lg"
                                                 : "border-white"
                                         }
@@ -410,10 +531,11 @@ function Product() {
                                     aria-label="Blue"
                                 />
 
-                                {/* Red */}
                                 <button
                                     onClick={() =>
-                                        setSelectedColor("red")
+                                        setSelectedColor(
+                                            "red"
+                                        )
                                     }
                                     className={`
                                         w-10
@@ -424,7 +546,8 @@ function Product() {
                                         transition
                                         hover:scale-110
                                         ${
-                                            selectedColor === "red"
+                                            selectedColor ===
+                                            "red"
                                                 ? "border-gray-900 scale-110 shadow-lg"
                                                 : "border-white"
                                         }
@@ -432,10 +555,11 @@ function Product() {
                                     aria-label="Red"
                                 />
 
-                                {/* Green */}
                                 <button
                                     onClick={() =>
-                                        setSelectedColor("green")
+                                        setSelectedColor(
+                                            "green"
+                                        )
                                     }
                                     className={`
                                         w-10
@@ -446,7 +570,8 @@ function Product() {
                                         transition
                                         hover:scale-110
                                         ${
-                                            selectedColor === "green"
+                                            selectedColor ===
+                                            "green"
                                                 ? "border-gray-900 scale-110 shadow-lg"
                                                 : "border-white"
                                         }
@@ -457,9 +582,7 @@ function Product() {
                             </div>
                         </div>
 
-                        {/* =========================
-                            SIZE
-                        ========================== */}
+                        {/* SIZE */}
                         <div className="mt-6">
 
                             <div className="flex items-center justify-between mb-3">
@@ -476,36 +599,48 @@ function Product() {
 
                             <div className="flex gap-3 flex-wrap">
 
-                                {["S", "M", "L", "XL"].map((size) => (
-                                    <button
-                                        key={size}
-                                        onClick={() =>
-                                            setSelectedSize(size)
-                                        }
-                                        className={`
-                                            w-14
-                                            h-12
-                                            rounded-xl
-                                            border
-                                            font-bold
-                                            transition-all
-                                            ${
-                                                selectedSize === size
-                                                    ? `${currentTheme.button} text-white border-transparent shadow-md scale-105`
-                                                    : "bg-white text-gray-700 border-gray-300 hover:border-gray-600"
+                                {[
+                                    "S",
+                                    "M",
+                                    "L",
+                                    "XL",
+                                ].map(
+                                    (size) => (
+                                        <button
+                                            key={
+                                                size
                                             }
-                                        `}
-                                    >
-                                        {size}
-                                    </button>
-                                ))}
+                                            onClick={() =>
+                                                setSelectedSize(
+                                                    size
+                                                )
+                                            }
+                                            className={`
+                                                w-14
+                                                h-12
+                                                rounded-xl
+                                                border
+                                                font-bold
+                                                transition-all
+                                                ${
+                                                    selectedSize ===
+                                                    size
+                                                        ? `${currentTheme.button} text-white border-transparent shadow-md scale-105`
+                                                        : "bg-white text-gray-700 border-gray-300 hover:border-gray-600"
+                                                }
+                                            `}
+                                        >
+                                            {
+                                                size
+                                            }
+                                        </button>
+                                    )
+                                )}
 
                             </div>
                         </div>
 
-                        {/* =========================
-                            STOCK
-                        ========================== */}
+                        {/* STOCK */}
                         <div className="mt-6">
 
                             {product.stock > 0 ? (
@@ -518,7 +653,11 @@ function Product() {
                                     </span>
 
                                     <span className="text-gray-500 text-sm">
-                                        ({product.stock} available)
+                                        (
+                                        {
+                                            product.stock
+                                        }{" "}
+                                        available)
                                     </span>
 
                                 </div>
@@ -536,9 +675,7 @@ function Product() {
 
                         </div>
 
-                        {/* =========================
-                            QUANTITY
-                        ========================== */}
+                        {/* QUANTITY */}
                         <div className="mt-6">
 
                             <span className="font-bold text-gray-800 block mb-3">
@@ -548,8 +685,13 @@ function Product() {
                             <div className="flex items-center">
 
                                 <button
-                                    onClick={decreaseQuantity}
-                                    disabled={quantity <= 1}
+                                    onClick={
+                                        decreaseQuantity
+                                    }
+                                    disabled={
+                                        quantity <=
+                                        1
+                                    }
                                     className="
                                         w-11
                                         h-11
@@ -566,7 +708,8 @@ function Product() {
                                     −
                                 </button>
 
-                                <div className="
+                                <div
+                                    className="
                                     w-14
                                     h-11
                                     flex
@@ -577,15 +720,21 @@ function Product() {
                                     border-b
                                     border-gray-300
                                     font-bold
-                                ">
+                                "
+                                >
                                     {quantity}
                                 </div>
 
                                 <button
-                                    onClick={increaseQuantity}
+                                    onClick={
+                                        increaseQuantity
+                                    }
                                     disabled={
                                         !product.stock ||
-                                        quantity >= product.stock
+                                        quantity >=
+                                            Number(
+                                                product.stock
+                                            )
                                     }
                                     className="
                                         w-11
@@ -607,13 +756,13 @@ function Product() {
 
                         </div>
 
-                        {/* =========================
-                            ADD TO CART
-                        ========================== */}
+                        {/* ADD TO CART */}
                         <button
                             onClick={addToCart}
                             disabled={!product.stock}
                             className={`
+                                group
+                                relative
                                 w-full
                                 mt-7
                                 py-4
@@ -628,6 +777,7 @@ function Product() {
                                 items-center
                                 justify-center
                                 gap-3
+                                overflow-hidden
                                 ${
                                     product.stock
                                         ? `${currentTheme.button} hover:scale-[1.02] hover:shadow-xl`
@@ -635,24 +785,49 @@ function Product() {
                                 }
                             `}
                         >
+
+                            {/* Shine Effect */}
+                            {product.stock &&
+                                !added && (
+                                    <span
+                                        className="
+                                            absolute
+                                            inset-0
+                                            -translate-x-full
+                                            bg-gradient-to-r
+                                            from-transparent
+                                            via-white/20
+                                            to-transparent
+                                            transition-transform
+                                            duration-700
+                                            group-hover:translate-x-full
+                                        "
+                                    />
+                                )}
+
                             {added ? (
                                 <>
-                                    <span>✓</span>
+                                    <Check className="h-6 w-6" />
                                     Added to Cart
+                                </>
+                            ) : product.stock ? (
+                                <>
+                                    <ShoppingCart className="h-6 w-6 transition-transform duration-300 group-hover:scale-110" />
+                                    Add to Cart
                                 </>
                             ) : (
                                 <>
-                                    <span className="text-xl">🛒</span>
-                                    Add to Cart
+                                    <ShoppingCart className="h-6 w-6" />
+                                    Out of Stock
                                 </>
                             )}
+
                         </button>
 
                         {/* Selected Options */}
                         <div className="mt-5 p-4 bg-white/70 rounded-2xl border border-gray-200">
 
                             <div className="flex justify-between text-sm">
-
                                 <span className="text-gray-500">
                                     Selected Color
                                 </span>
@@ -660,11 +835,9 @@ function Product() {
                                 <span className="font-bold capitalize">
                                     {selectedColor}
                                 </span>
-
                             </div>
 
                             <div className="flex justify-between text-sm mt-2">
-
                                 <span className="text-gray-500">
                                     Selected Size
                                 </span>
@@ -672,11 +845,9 @@ function Product() {
                                 <span className="font-bold">
                                     {selectedSize}
                                 </span>
-
                             </div>
 
                             <div className="flex justify-between text-sm mt-2">
-
                                 <span className="text-gray-500">
                                     Quantity
                                 </span>
@@ -684,7 +855,6 @@ function Product() {
                                 <span className="font-bold">
                                     {quantity}
                                 </span>
-
                             </div>
 
                         </div>
@@ -692,9 +862,7 @@ function Product() {
                     </div>
                 </div>
 
-                {/* =========================
-                    PRODUCT INFORMATION
-                ========================== */}
+                {/* PRODUCT INFORMATION */}
                 <div className="border-t border-gray-200 bg-white/60 p-6 sm:p-8 lg:p-12">
 
                     <div className="max-w-5xl mx-auto">
