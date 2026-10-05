@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
     Card,
     CardContent,
@@ -6,133 +6,554 @@ import {
     CardFooter,
     CardHeader,
     CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { EyeOff, Eye, Loader2 } from "lucide-react"
-import { useState ,useEffect} from "react"
-import { Link, useNavigate } from "react-router-dom"
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+import {
+    EyeOff,
+    Eye,
+    Loader2,
+    LockKeyhole,
+    Mail,
+    ShoppingBag,
+    ShieldCheck,
+} from "lucide-react";
+
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { toast } from "sonner"
+import { toast } from "sonner";
+
+import { useDispatch } from "react-redux";
+import { loginUser } from "../redux/slices/authSlice";
 
 export function Login() {
-    const navigate = useNavigate()
-    const [Loader, setLoader] = useState(false)
-    const [showPassword, setShowPassword] = useState(false);
-    const [form, setForm] = useState({
-        email: '',
-        password: ''
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
 
+    const [loader, setLoader] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+
+    const [form, setForm] = useState({
+        email: "",
+        password: "",
     });
+
+    // =========================
+    // HANDLE INPUT
+    // =========================
     const handleValue = (e) => {
+        const { name, value } = e.target;
+
         setForm((prev) => ({
             ...prev,
-            [e.target.name]: e.target.value
+            [name]: value,
         }));
     };
 
+    // =========================
+    // LOGIN
+    // =========================
+    const handleSubmit = async (e) => {
+        e.preventDefault();
 
-    const HandleSubmit = async (e) => {
-       e.preventDefault();
+        if (!form.email.trim() || !form.password.trim()) {
+            toast.error("Please enter email and password");
+            return;
+        }
 
         try {
-             
             setLoader(true);
 
             const res = await axios.post(
-                'http://localhost:3000/api/auth/login',
+                "http://localhost:3000/api/auth/login",
                 form,
                 {
                     headers: {
-                        'Content-Type': 'application/json'
-                    }
+                        "Content-Type": "application/json",
+                    },
                 }
             );
 
             console.log("Backend Response:", res.data);
 
-           if (res.data && res.data.accessToken) {
-                localStorage.setItem('accessToken', res.data.accessToken);
-                localStorage.setItem('user', res.data.user);
-                toast.success("Login successful");
-                navigate("/");
+            // =========================
+            // LOGIN SUCCESS
+            // =========================
+            if (res.data?.accessToken && res.data?.user) {
+
+                // IMPORTANT:
+                // Redux auth state update hoga
+                dispatch(
+                    loginUser({
+                        user: res.data.user,
+                        accessToken: res.data.accessToken,
+                    })
+                );
+
+                /*
+                 * Redux state update ke baad Navbar automatically
+                 * re-render hoga because Navbar useSelector se
+                 * auth state read kar raha hoga.
+                 */
+
+                toast.success("Login successful 🎉");
+
+                // Home page
+                navigate("/", {
+                    replace: true,
+                });
+
+                return;
             }
-          
+
+            // =========================
+            // INVALID RESPONSE
+            // =========================
+            toast.error(
+                res.data?.message || "Invalid login response"
+            );
 
         } catch (error) {
-            console.log("Login Error:", error.response?.data);
+            console.log(
+                "Login Error:",
+                error.response?.data || error.message
+            );
 
             toast.error(
-                error.response?.data?.message || "Something went wrong"
+                error.response?.data?.message ||
+                "Invalid email or password"
             );
+
         } finally {
             setLoader(false);
         }
     };
+
     return (
-        <div className="flex justify-center items-center bg-pink-200 min-h-screen">
-            <Card className="w-full max-w-sm">
-                <CardHeader>
-                    <CardTitle>Login to your account</CardTitle>
-                    <CardDescription>
-                        Enter your email below to login to your account
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex flex-col gap-6">
-                        <div className="grid gap-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                name='email'
-                                value={form.email}
-                                onChange={handleValue}
-                                placeholder="m@example.com"
-                                required
+        <div
+            className="
+                min-h-screen
+                relative
+                overflow-hidden
+                flex
+                items-center
+                justify-center
+                px-4
+                py-10
+                bg-gradient-to-br
+                from-slate-950
+                via-blue-950
+                to-indigo-950
+            "
+        >
+
+            {/* =========================
+                BACKGROUND
+            ========================= */}
+
+            <div
+                className="
+                    absolute
+                    -top-32
+                    -left-32
+                    w-96
+                    h-96
+                    bg-blue-500/20
+                    rounded-full
+                    blur-3xl
+                "
+            />
+
+            <div
+                className="
+                    absolute
+                    -bottom-32
+                    -right-32
+                    w-96
+                    h-96
+                    bg-purple-500/20
+                    rounded-full
+                    blur-3xl
+                "
+            />
+
+            {/* =========================
+                LOGIN CARD
+            ========================= */}
+
+            <Card
+                className="
+                    relative
+                    z-10
+                    w-full
+                    max-w-md
+                    border
+                    border-white/10
+                    bg-white/[0.08]
+                    backdrop-blur-2xl
+                    shadow-2xl
+                    shadow-black/30
+                    text-white
+                    rounded-3xl
+                    overflow-hidden
+                "
+            >
+
+                {/* Top Accent */}
+
+                <div
+                    className="
+                        h-1
+                        w-full
+                        bg-gradient-to-r
+                        from-blue-500
+                        via-purple-500
+                        to-pink-500
+                    "
+                />
+
+                <CardHeader className="px-7 pt-8 pb-5">
+
+                    {/* Logo */}
+
+                    <div className="flex justify-center mb-6">
+
+                        <div
+                            className="
+                                w-16
+                                h-16
+                                rounded-2xl
+                                bg-gradient-to-br
+                                from-blue-500
+                                to-purple-600
+                                flex
+                                items-center
+                                justify-center
+                                shadow-lg
+                                shadow-blue-500/30
+                            "
+                        >
+                            <ShoppingBag
+                                size={30}
+                                className="text-white"
                             />
                         </div>
-                        <div className="grid gap-2">
-                            <div className="flex items-center">
-                                <Label htmlFor="password">Password</Label>
-                                <Link
-                                    to='/verify-email'
-                                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                                >
-                                    Forgot your password?
-                                </Link>
+
+                    </div>
+
+                    <CardTitle
+                        className="
+                            text-2xl
+                            sm:text-3xl
+                            text-center
+                            font-extrabold
+                            tracking-tight
+                            text-white
+                        "
+                    >
+                        Welcome Back
+                    </CardTitle>
+
+                    <CardDescription
+                        className="
+                            text-center
+                            text-gray-400
+                            mt-2
+                        "
+                    >
+                        Login to your ShopZone account
+                    </CardDescription>
+
+                </CardHeader>
+
+                {/* =========================
+                    FORM
+                ========================= */}
+
+                <form onSubmit={handleSubmit}>
+
+                    <CardContent className="px-7 space-y-5">
+
+                        {/* EMAIL */}
+
+                        <div className="space-y-2">
+
+                            <Label
+                                htmlFor="email"
+                                className="text-gray-200"
+                            >
+                                Email Address
+                            </Label>
+
+                            <div className="relative">
+
+                                <Mail
+                                    size={18}
+                                    className="
+                                        absolute
+                                        left-3
+                                        top-1/2
+                                        -translate-y-1/2
+                                        text-gray-400
+                                    "
+                                />
+
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    name="email"
+                                    value={form.email}
+                                    onChange={handleValue}
+                                    placeholder="you@example.com"
+                                    autoComplete="email"
+                                    required
+                                    className="
+                                        h-12
+                                        pl-10
+                                        rounded-xl
+                                        bg-white/10
+                                        border-white/10
+                                        text-white
+                                        placeholder:text-gray-500
+                                        focus:border-blue-500
+                                        focus:ring-blue-500/20
+                                    "
+                                />
+
                             </div>
-                            <div className="relative w-full">
+
+                        </div>
+
+                        {/* PASSWORD */}
+
+                        <div className="space-y-2">
+
+                            <div
+                                className="
+                                    flex
+                                    items-center
+                                    justify-between
+                                "
+                            >
+
+                                <Label
+                                    htmlFor="password"
+                                    className="text-gray-200"
+                                >
+                                    Password
+                                </Label>
+
+                                <Link
+                                    to="/verify-email"
+                                    className="
+                                        text-sm
+                                        text-blue-400
+                                        hover:text-blue-300
+                                        hover:underline
+                                        transition
+                                    "
+                                >
+                                    Forgot password?
+                                </Link>
+
+                            </div>
+
+                            <div className="relative">
+
+                                <LockKeyhole
+                                    size={18}
+                                    className="
+                                        absolute
+                                        left-3
+                                        top-1/2
+                                        -translate-y-1/2
+                                        text-gray-400
+                                    "
+                                />
+
                                 <Input
                                     id="password"
-                                    type={showPassword ? "text" : "password"}
+                                    type={
+                                        showPassword
+                                            ? "text"
+                                            : "password"
+                                    }
                                     name="password"
-                                    required
-                                    placeholder='Enter your Password'
                                     value={form.password}
                                     onChange={handleValue}
-                                    className="pr-10"
+                                    placeholder="Enter your password"
+                                    autoComplete="current-password"
+                                    required
+                                    className="
+                                        h-12
+                                        pl-10
+                                        pr-11
+                                        rounded-xl
+                                        bg-white/10
+                                        border-white/10
+                                        text-white
+                                        placeholder:text-gray-500
+                                        focus:border-blue-500
+                                        focus:ring-blue-500/20
+                                    "
                                 />
 
                                 <button
                                     type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800"
+                                    onClick={() =>
+                                        setShowPassword(
+                                            (prev) => !prev
+                                        )
+                                    }
+                                    className="
+                                        absolute
+                                        right-3
+                                        top-1/2
+                                        -translate-y-1/2
+                                        text-gray-400
+                                        hover:text-white
+                                        transition
+                                    "
+                                    aria-label={
+                                        showPassword
+                                            ? "Hide password"
+                                            : "Show password"
+                                    }
                                 >
-                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    {showPassword ? (
+                                        <EyeOff size={19} />
+                                    ) : (
+                                        <Eye size={19} />
+                                    )}
                                 </button>
-                            </div>
-                        </div>
-                    </div>
 
-                </CardContent>
-                <CardFooter className="flex-col gap-2">
-                    <Button type="submit" className="w-full" onClick={HandleSubmit}>
-                        {Loader ? <><Loader2 className="h-4 w-4 animate-spin mr-4" />Please wait..</> : " Login"}
-                    </Button>
-                    <p className="text-grey-200">Do you not account acount? <Link to='/Signup' className='hover:underline cursor-pointer tect-pink-100'>Signup</Link></p>
-                </CardFooter>
+                            </div>
+
+                        </div>
+
+                        {/* SECURITY MESSAGE */}
+
+                        <div
+                            className="
+                                flex
+                                items-center
+                                gap-2
+                                rounded-xl
+                                border
+                                border-white/10
+                                bg-white/5
+                                px-4
+                                py-3
+                            "
+                        >
+
+                            <ShieldCheck
+                                size={18}
+                                className="text-green-400"
+                            />
+
+                            <p
+                                className="
+                                    text-xs
+                                    text-gray-400
+                                "
+                            >
+                                Your account information is securely protected.
+                            </p>
+
+                        </div>
+
+                    </CardContent>
+
+                    {/* =========================
+                        FOOTER
+                    ========================= */}
+
+                    <CardFooter
+                        className="
+                            px-7
+                            pb-8
+                            pt-5
+                            flex-col
+                            gap-5
+                        "
+                    >
+
+                        <Button
+                            type="submit"
+                            disabled={loader}
+                            className="
+                                w-full
+                                h-12
+                                rounded-xl
+                                bg-gradient-to-r
+                                from-blue-600
+                                to-indigo-600
+                                hover:from-blue-500
+                                hover:to-indigo-500
+                                text-white
+                                font-bold
+                                shadow-lg
+                                shadow-blue-600/20
+                                transition-all
+                                duration-300
+                                hover:-translate-y-0.5
+                                disabled:opacity-70
+                                disabled:hover:translate-y-0
+                            "
+                        >
+
+                            {loader ? (
+                                <>
+                                    <Loader2
+                                        className="
+                                            h-5
+                                            w-5
+                                            animate-spin
+                                            mr-2
+                                        "
+                                    />
+
+                                    Signing in...
+                                </>
+                            ) : (
+                                "Sign In"
+                            )}
+
+                        </Button>
+
+                        <p
+                            className="
+                                text-sm
+                                text-gray-400
+                                text-center
+                            "
+                        >
+                            Don't have an account?
+
+                            <Link
+                                to="/Signup"
+                                className="
+                                    ml-1
+                                    text-blue-400
+                                    font-semibold
+                                    hover:text-blue-300
+                                    hover:underline
+                                    transition
+                                "
+                            >
+                                Create account
+                            </Link>
+
+                        </p>
+
+                    </CardFooter>
+
+                </form>
+
             </Card>
         </div>
-    )
+    );
 }
