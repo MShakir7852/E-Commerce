@@ -1,4 +1,5 @@
 import React from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
     X,
@@ -17,6 +18,8 @@ import {
 } from "../redux/slices/cartSlice";
 
 const AddToCart = ({ isOpen, onClose }) => {
+
+    const navigate = useNavigate();
     const dispatch = useDispatch();
 
     const cartItems = useSelector(
@@ -498,6 +501,7 @@ const AddToCart = ({ isOpen, onClose }) => {
                                 hover:shadow-lg
                                 hover:-translate-y-0.5
                             "
+                              onClick={() => navigate("/checkout")}
                         >
                             Proceed to Checkout
 
