@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import { addToCart } from "../redux/slices/cartSlice";
 import {
     Search,
     SlidersHorizontal,
@@ -9,6 +11,8 @@ import {
 } from "lucide-react";
 
 function ProductsComponenet() {
+      const dispatch = useDispatch();
+
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
 
@@ -36,7 +40,7 @@ function ProductsComponenet() {
 
             const data = response.data;
 
-            console.log("Products:", data);
+            // console.log("Products:", data);
 
             if (data.success === true) {
                 setProducts(data.products || []);
@@ -60,6 +64,13 @@ function ProductsComponenet() {
         }
     };
 
+ const handleAddToCart = (e, product) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    dispatch(addToCart(product));
+};
+
     // =========================
     // FETCH CATEGORIES
     // =========================
@@ -72,7 +83,7 @@ function ProductsComponenet() {
                 "http://localhost:3000/api/categories/all"
             );
 
-            console.log("Categories:", response.data);
+            // console.log("Categories:", response.data);
 
             if (Array.isArray(response.data)) {
                 setCategories(response.data);
@@ -842,15 +853,14 @@ function ProductsComponenet() {
                                         {/* ADD TO CART */}
 
                                         <button
+                                          onClick={(e) => handleAddToCart(e, product)}
                                             type="button"
                                             disabled={
                                                 Number(
                                                     product.stock
                                                 ) <= 0
                                             }
-                                            onClick={(e) =>
-                                                e.preventDefault()
-                                            }
+                                           
                                             className={`w-full mt-5 py-3 rounded-xl font-semibold transition-all duration-300 ${
                                                 Number(
                                                     product.stock

@@ -13,6 +13,7 @@ import EmailForForgetPassword from './pages/EmailForForgetPassword';
 import NewPassword from './pages/newPassword';
 import ProductComponenet from './pages/productsComponenet'
 import Product from './pages/product'
+import AddToCart from './pages/AddToCart'
 
 
 
@@ -33,9 +34,9 @@ function App() {
           <Route path='/error' element={<Faildemailverification />} />
           <Route path='/products' element={<ProductComponenet />} />
           <Route path='/product/:id' element={<Product />} />
-
-        </Routes>
-        <Footer />
+          <Route path='/add-to-cart' element={<AddToCart />} />
+            </Routes>
+          <Footer />
       </BrowserRouter>
     </>
   )
