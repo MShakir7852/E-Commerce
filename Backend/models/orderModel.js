@@ -86,6 +86,12 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
+    trackingNumber: {
+      type: String,
+      unique: true,
+      required: true,
+      sparse: true
+    },
     status: {
       type: String,
       enum: [

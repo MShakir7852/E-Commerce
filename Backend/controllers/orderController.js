@@ -2,6 +2,7 @@ const orderService = require("../services/orderService");
 
 const createOrder = async (req, res) => {
     try {
+        const trackingNumber = "SZT-" + Math.random().toString(36).substring(2, 10).toUpperCase();
         const orderData = {
             user: req.user._id || req.user,
             items: req.body.items,
@@ -10,8 +11,11 @@ const createOrder = async (req, res) => {
             subtotal: req.body.subtotal,
             shippingFee: req.body.shippingFee,
             total: req.body.total,
+            trackingNumber
         };
+        console.log("Generated Tracking Number:", trackingNumber);
 
+        console.log("ORDER DATA:", orderData);
         const order = await orderService.createOrder(orderData);
 
         return res.status(201).json({
