@@ -38,7 +38,6 @@ function App() {
           <Route path='/product/:id' element={<Product />} />
           <Route path='/add-to-cart' element={<AddToCart />} />
           <Route path="/checkout" element={<Checkout />} />
-
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Footer />
