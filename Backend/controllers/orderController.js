@@ -2,7 +2,13 @@ const orderService = require("../services/orderService");
 
 const createOrder = async (req, res) => {
     try {
-        const trackingNumber = "SZT-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+        const trackingNumber =
+            "SZT-" +
+            Math.random()
+                .toString(36)
+                .substring(2, 10)
+                .toUpperCase();
+
         const orderData = {
             user: req.user._id || req.user,
             items: req.body.items,
@@ -11,20 +17,21 @@ const createOrder = async (req, res) => {
             subtotal: req.body.subtotal,
             shippingFee: req.body.shippingFee,
             total: req.body.total,
-            trackingNumber
+            trackingNumber,
         };
-        console.log("Generated Tracking Number:", trackingNumber);
 
-        console.log("ORDER DATA:", orderData);
+    
         const order = await orderService.createOrder(orderData);
+
 
         return res.status(201).json({
             statusText: "success",
             message: "Order placed successfully",
             order,
         });
+
     } catch (error) {
-        console.error("Create Order Error:", error);
+
 
         return res.status(500).json({
             statusText: "error",
