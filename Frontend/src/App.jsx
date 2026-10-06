@@ -15,6 +15,7 @@ import ProductComponenet from './pages/productsComponenet'
 import Product from './pages/product'
 import AddToCart from './pages/AddToCart'
 import Checkout from "./pages/Checkout";
+import NotFound from "./pages/NotFound";
 
 
 
@@ -37,8 +38,10 @@ function App() {
           <Route path='/product/:id' element={<Product />} />
           <Route path='/add-to-cart' element={<AddToCart />} />
           <Route path="/checkout" element={<Checkout />} />
-            </Routes>
-          <Footer />
+
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Footer />
       </BrowserRouter>
     </>
   )
