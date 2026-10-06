@@ -16,6 +16,7 @@ import Product from './pages/product'
 import AddToCart from './pages/AddToCart'
 import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
+import TrackOrder from "./pages/TrackOrder";
 
 
 
@@ -39,6 +40,10 @@ function App() {
           <Route path='/add-to-cart' element={<AddToCart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="*" element={<NotFound />} />
+          <Route
+            path="/track-order"
+            element={<TrackOrder />}
+          />
         </Routes>
         <Footer />
       </BrowserRouter>

@@ -97,10 +97,13 @@ const getOrderByTrackingNumber = async (req, res) => {
     try {
         const userId = req.user._id || req.user;
 
-        const order = await orderService.getOrderByTrackingNumber(
-            req.params.trackingNumber,
-            userId
-        );
+        const trackingNumber = req.params.trackingNumber;
+
+        const order =
+            await orderService.getOrderByTrackingNumber(
+                trackingNumber,
+                userId
+            );
 
         if (!order) {
             return res.status(404).json({

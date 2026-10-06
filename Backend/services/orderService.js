@@ -33,11 +33,10 @@ const getOrderByTrackingNumber = async (trackingNumber, userId) => {
     const order = await Order.findOne({
         trackingNumber: trackingNumber.toUpperCase(),
         user: userId,
-    }).populate("items.product");
+    });
 
     return order;
 };
-
 
 module.exports = {
     createOrder,
