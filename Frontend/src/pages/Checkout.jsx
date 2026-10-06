@@ -21,6 +21,7 @@ import { clearCart } from "../redux/slices/cartSlice";
 const Checkout = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const { accessToken } = useSelector((state) => state.auth);
 
     // ==========================================
     // GET CART SAFELY FROM REDUX
@@ -31,10 +32,10 @@ const Checkout = () => {
     const cartItems = Array.isArray(cartState?.cartItems)
         ? cartState.cartItems
         : Array.isArray(cartState?.items)
-        ? cartState.items
-        : Array.isArray(cartState?.cart)
-        ? cartState.cart
-        : [];
+            ? cartState.items
+            : Array.isArray(cartState?.cart)
+                ? cartState.cart
+                : [];
 
     // ==========================================
     // STATES
@@ -58,10 +59,10 @@ const Checkout = () => {
         return cartItems.reduce((total, item) => {
             const price = Number(
                 item?.price ??
-                    item?.discountPrice ??
-                    item?.product?.price ??
-                    item?.product?.discountPrice ??
-                    0
+                item?.discountPrice ??
+                item?.product?.price ??
+                item?.product?.discountPrice ??
+                0
             );
 
             const quantity = Number(item?.quantity ?? 1);
@@ -128,10 +129,10 @@ const Checkout = () => {
 
                 const price = Number(
                     item?.price ??
-                        item?.discountPrice ??
-                        item?.product?.price ??
-                        item?.product?.discountPrice ??
-                        0
+                    item?.discountPrice ??
+                    item?.product?.price ??
+                    item?.product?.discountPrice ??
+                    0
                 );
 
                 const quantity = Number(
@@ -173,14 +174,23 @@ const Checkout = () => {
             // API REQUEST
             // ----------------------------------
 
+            if (!accessToken) {
+                toast.error("Please login again to place your order");
+                navigate("/Login");
+                return;
+            }
+
             const response = await axios.post(
                 "http://localhost:3000/api/orders/create",
                 orderData,
                 {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                    },
                     withCredentials: true,
                 }
-            );
-         
+            );c
+
             // ----------------------------------
             // SUCCESS
             // ----------------------------------
@@ -203,7 +213,7 @@ const Checkout = () => {
             } else {
                 toast.error(
                     response?.data?.message ||
-                        "Unable to place order"
+                    "Unable to place order"
                 );
             }
         } catch (error) {
@@ -214,7 +224,7 @@ const Checkout = () => {
 
             toast.error(
                 error?.response?.data?.message ||
-                    "Failed to place order"
+                "Failed to place order"
             );
         } finally {
             setLoading(false);
@@ -743,7 +753,7 @@ const Checkout = () => {
                                             <p className="text-xs text-slate-500">
                                                 {cartItems.length}{" "}
                                                 {cartItems.length ===
-                                                1
+                                                    1
                                                     ? "item"
                                                     : "items"}
                                             </p>
@@ -765,18 +775,18 @@ const Checkout = () => {
                                             const price =
                                                 Number(
                                                     item?.price ??
-                                                        item?.discountPrice ??
-                                                        item?.product
-                                                            ?.price ??
-                                                        item?.product
-                                                            ?.discountPrice ??
-                                                        0
+                                                    item?.discountPrice ??
+                                                    item?.product
+                                                        ?.price ??
+                                                    item?.product
+                                                        ?.discountPrice ??
+                                                    0
                                                 );
 
                                             const quantity =
                                                 Number(
                                                     item?.quantity ??
-                                                        1
+                                                    1
                                                 );
 
                                             const name =
@@ -899,13 +909,13 @@ const Checkout = () => {
                                             <span
                                                 className={
                                                     shippingFee ===
-                                                    0
+                                                        0
                                                         ? "font-semibold text-emerald-600"
                                                         : "font-medium text-slate-900"
                                                 }
                                             >
                                                 {shippingFee ===
-                                                0
+                                                    0
                                                     ? "FREE"
                                                     : `Rs. ${shippingFee}`}
                                             </span>
