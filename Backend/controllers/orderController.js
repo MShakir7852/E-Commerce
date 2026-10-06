@@ -93,8 +93,41 @@ const getOrderById = async (req, res) => {
     }
 };
 
+const getOrderByTrackingNumber = async (req, res) => {
+    try {
+        const userId = req.user._id || req.user;
+
+        const order = await orderService.getOrderByTrackingNumber(
+            req.params.trackingNumber,
+            userId
+        );
+
+        if (!order) {
+            return res.status(404).json({
+                statusText: "error",
+                message: "Order not found",
+            });
+        }
+
+        return res.status(200).json({
+            statusText: "success",
+            order,
+        });
+
+    } catch (error) {
+        console.error("Track Order Error:", error);
+
+        return res.status(500).json({
+            statusText: "error",
+            message: "Failed to track order",
+            error: error.message,
+        });
+    }
+};
+
 module.exports = {
     createOrder,
     getUserOrders,
     getOrderById,
+    getOrderByTrackingNumber,
 };
