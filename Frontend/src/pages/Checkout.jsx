@@ -42,6 +42,13 @@ const Checkout = () => {
     // ==========================================
 
     const [loading, setLoading] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState("COD");
+    const [cardDetails, setCardDetails] = useState({
+        cardNumber: "",
+        cardName: "",
+        expiry: "",
+        cvv: "",
+    });
 
     const [formData, setFormData] = useState({
         fullName: "",
@@ -51,6 +58,14 @@ const Checkout = () => {
         postalCode: "",
     });
 
+    const handleCardChange = (e) => {
+        const { name, value } = e.target;
+
+        setCardDetails((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
     // ==========================================
     // SUBTOTAL
     // ==========================================
@@ -163,7 +178,7 @@ const Checkout = () => {
                     postalCode: formData.postalCode.trim(),
                 },
 
-                paymentMethod: "COD",
+                paymentMethod,
 
                 subtotal,
                 shippingFee,
@@ -585,6 +600,10 @@ const Checkout = () => {
 
                             {/* PAYMENT */}
 
+                            {/* ======================================
+    PAYMENT METHOD
+======================================= */}
+
                             <section className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
 
                                 <div className="px-6 py-5 border-b border-slate-100">
@@ -592,24 +611,20 @@ const Checkout = () => {
                                     <div className="flex items-center gap-3">
 
                                         <div className="w-11 h-11 rounded-2xl bg-slate-100 flex items-center justify-center">
-
                                             <CreditCard
                                                 size={20}
                                                 className="text-slate-700"
                                             />
-
                                         </div>
 
                                         <div>
-
                                             <h2 className="text-lg font-bold text-slate-900">
                                                 Payment method
                                             </h2>
 
                                             <p className="text-sm text-slate-500">
-                                                Select how you want to pay
+                                                Choose how you want to pay
                                             </p>
-
                                         </div>
 
                                     </div>
@@ -617,35 +632,38 @@ const Checkout = () => {
                                 </div>
 
 
-                                <div className="p-6">
+                                <div className="p-6 space-y-4">
 
-                                    <div className="relative border-2 border-slate-900 rounded-2xl p-5 bg-slate-50">
+                                    {/* ==================================
+            CASH ON DELIVERY
+        =================================== */}
 
-                                        <div className="absolute top-4 right-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMethod("COD")}
+                                        className={`w-full text-left relative border-2 rounded-2xl p-5 transition-all ${paymentMethod === "COD"
+                                            ? "border-slate-900 bg-slate-50"
+                                            : "border-slate-200 bg-white hover:border-slate-300"
+                                            }`}
+                                    >
 
-                                            <div className="w-6 h-6 rounded-full bg-slate-900 flex items-center justify-center">
-
+                                        {paymentMethod === "COD" && (
+                                            <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-slate-900 flex items-center justify-center">
                                                 <Check
                                                     size={14}
                                                     className="text-white"
                                                 />
-
                                             </div>
-
-                                        </div>
-
+                                        )}
 
                                         <div className="flex items-start gap-4">
 
                                             <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-sm">
-
                                                 <Truck
                                                     size={21}
                                                     className="text-slate-700"
                                                 />
-
                                             </div>
-
 
                                             <div>
 
@@ -653,23 +671,384 @@ const Checkout = () => {
                                                     Cash on Delivery
                                                 </p>
 
-                                                <p className="text-sm text-slate-500 mt-1 max-w-md">
-                                                    Pay securely in cash
-                                                    when your order is
-                                                    delivered to your
-                                                    doorstep.
+                                                <p className="text-sm text-slate-500 mt-1">
+                                                    Pay cash when your order is delivered
+                                                    to your doorstep.
                                                 </p>
 
                                             </div>
 
                                         </div>
 
-                                    </div>
+                                    </button>
+
+
+                                    {/* ==================================
+            ONLINE PAYMENT
+        =================================== */}
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMethod("ONLINE")}
+                                        className={`w-full text-left relative border-2 rounded-2xl p-5 transition-all ${paymentMethod === "ONLINE"
+                                            ? "border-slate-900 bg-slate-50"
+                                            : "border-slate-200 bg-white hover:border-slate-300"
+                                            }`}
+                                    >
+
+                                        {paymentMethod === "ONLINE" && (
+                                            <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-slate-900 flex items-center justify-center">
+                                                <Check
+                                                    size={14}
+                                                    className="text-white"
+                                                />
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-start gap-4">
+
+                                            <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-sm">
+                                                <CreditCard
+                                                    size={21}
+                                                    className="text-slate-700"
+                                                />
+                                            </div>
+
+                                            <div>
+
+                                                <p className="font-bold text-slate-900">
+                                                    Online Payment
+                                                </p>
+
+                                                <p className="text-sm text-slate-500 mt-1">
+                                                    Pay securely using your debit or credit card.
+                                                </p>
+
+                                            </div>
+
+                                        </div>
+
+                                    </button>
+
+
+                                    {/* ==================================
+            CARD DETAILS
+            SHOW ONLY WHEN ONLINE SELECTED
+        =================================== */}
+
+                             {/* ==================================
+    PREMIUM CARD DETAILS
+=================================== */}
+
+{paymentMethod === "ONLINE" && (
+    <div className="mt-5 rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-slate-100 p-5 sm:p-6 shadow-xl shadow-slate-900/5 animate-in fade-in slide-in-from-top-3 duration-500">
+
+        {/* ==================================
+            CARD PREVIEW
+        =================================== */}
+
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-950 via-slate-800 to-slate-900 p-6 text-white shadow-2xl shadow-slate-900/20">
+
+            {/* Decorative Glow */}
+
+            <div className="absolute -top-20 -right-20 w-48 h-48 rounded-full bg-white/10 blur-3xl" />
+
+            <div className="absolute -bottom-24 -left-20 w-56 h-56 rounded-full bg-blue-500/10 blur-3xl" />
+
+
+            {/* CARD TOP */}
+
+            <div className="relative flex items-center justify-between">
+
+                <div className="flex items-center gap-2">
+
+                    <div className="w-10 h-7 rounded-md bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-600 shadow-inner">
+                        <div className="grid grid-cols-2 gap-[2px] p-1">
+                            <span className="border border-yellow-800/40 rounded-sm" />
+                            <span className="border border-yellow-800/40 rounded-sm" />
+                            <span className="border border-yellow-800/40 rounded-sm" />
+                            <span className="border border-yellow-800/40 rounded-sm" />
+                        </div>
+                    </div>
+
+                    <span className="text-xs font-semibold text-white/60 tracking-wider">
+                        SECURE CARD
+                    </span>
+
+                </div>
+
+
+                <div className="flex items-center gap-2">
+
+                    <div className="w-8 h-8 rounded-full bg-red-500/80" />
+
+                    <div className="w-8 h-8 rounded-full bg-yellow-400/80 -ml-5" />
+
+                </div>
+
+            </div>
+
+
+            {/* CARD NUMBER */}
+
+            <div className="relative mt-9">
+
+                <p className="text-[10px] uppercase tracking-[0.25em] text-white/40 mb-2">
+                    Card number
+                </p>
+
+                <p className="text-xl sm:text-2xl font-semibold tracking-[0.18em] font-mono">
+
+                    {cardDetails.cardNumber
+                        ? cardDetails.cardNumber
+                        : "•••• •••• •••• ••••"}
+
+                </p>
+
+            </div>
+
+
+            {/* CARD BOTTOM */}
+
+            <div className="relative mt-7 flex items-end justify-between">
+
+                <div>
+
+                    <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mb-1">
+                        Cardholder
+                    </p>
+
+                    <p className="text-sm font-semibold uppercase tracking-wider">
+                        {cardDetails.cardName || "YOUR NAME"}
+                    </p>
+
+                </div>
+
+
+                <div>
+
+                    <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 mb-1">
+                        Expires
+                    </p>
+
+                    <p className="text-sm font-semibold tracking-wider">
+                        {cardDetails.expiry || "MM/YY"}
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        {/* ==================================
+            CARD FORM HEADER
+        =================================== */}
+
+        <div className="flex items-center justify-between mt-7 mb-5">
+
+            <div>
+
+                <div className="flex items-center gap-2">
+
+                    <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center shadow-sm">
+                        <CreditCard
+                            size={15}
+                            className="text-white"
+                        />
+                    </div>
+
+                    <h3 className="font-bold text-slate-900">
+                        Card details
+                    </h3>
+
+                </div>
+
+                <p className="text-xs text-slate-500 mt-2 ml-10">
+                    Enter your card information securely
+                </p>
+
+            </div>
+
+
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100">
+
+                <ShieldCheck
+                    size={14}
+                    className="text-emerald-600"
+                />
+
+                <span className="text-[11px] font-semibold text-emerald-700">
+                    Secure
+                </span>
+
+            </div>
+
+        </div>
+
+
+        {/* ==================================
+            FORM
+        =================================== */}
+
+        <div className="space-y-5">
+
+            {/* CARD NUMBER */}
+
+            <div>
+
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                    Card number
+                </label>
+
+                <div className="relative">
+
+                    <input
+                        type="text"
+                        name="cardNumber"
+                        value={cardDetails.cardNumber}
+                        onChange={handleCardChange}
+                        required={paymentMethod === "ONLINE"}
+                        maxLength="19"
+                        inputMode="numeric"
+                        placeholder="1234 5678 9012 3456"
+                        className="w-full h-14 pl-4 pr-12 rounded-2xl border border-slate-200 bg-white text-slate-900 font-mono tracking-wider placeholder:text-slate-300 placeholder:tracking-normal outline-none transition-all duration-200 focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 focus:shadow-lg focus:shadow-slate-900/5"
+                    />
+
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+
+                        <CreditCard
+                            size={20}
+                            className="text-slate-400"
+                        />
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            {/* CARDHOLDER */}
+
+            <div>
+
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                    Cardholder name
+                </label>
+
+                <input
+                    type="text"
+                    name="cardName"
+                    value={cardDetails.cardName}
+                    onChange={handleCardChange}
+                    required={paymentMethod === "ONLINE"}
+                    placeholder="Muhammad Shakir"
+                    className="w-full h-14 px-4 rounded-2xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-300 outline-none transition-all duration-200 focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 focus:shadow-lg focus:shadow-slate-900/5"
+                />
+
+            </div>
+
+
+            {/* EXPIRY + CVV */}
+
+            <div className="grid grid-cols-2 gap-4">
+
+                {/* EXPIRY */}
+
+                <div>
+
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                        Expiry date
+                    </label>
+
+                    <input
+                        type="text"
+                        name="expiry"
+                        value={cardDetails.expiry}
+                        onChange={handleCardChange}
+                        required={paymentMethod === "ONLINE"}
+                        maxLength="5"
+                        placeholder="MM/YY"
+                        className="w-full h-14 px-4 rounded-2xl border border-slate-200 bg-white text-slate-900 font-mono tracking-wider placeholder:text-slate-300 placeholder:tracking-normal outline-none transition-all duration-200 focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 focus:shadow-lg focus:shadow-slate-900/5"
+                    />
+
+                </div>
+
+
+                {/* CVV */}
+
+                <div>
+
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                        CVV
+                    </label>
+
+                    <div className="relative">
+
+                        <input
+                            type="password"
+                            name="cvv"
+                            value={cardDetails.cvv}
+                            onChange={handleCardChange}
+                            required={paymentMethod === "ONLINE"}
+                            maxLength="4"
+                            inputMode="numeric"
+                            placeholder="•••"
+                            className="w-full h-14 px-4 pr-11 rounded-2xl border border-slate-200 bg-white text-slate-900 font-mono tracking-widest placeholder:text-slate-300 outline-none transition-all duration-200 focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 focus:shadow-lg focus:shadow-slate-900/5"
+                        />
+
+                        <Lock
+                            size={17}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                        />
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            {/* ==================================
+                SECURITY INFO
+            =================================== */}
+
+            <div className="flex items-start gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3.5">
+
+                <div className="w-8 h-8 shrink-0 rounded-xl bg-white border border-emerald-100 flex items-center justify-center">
+
+                    <ShieldCheck
+                        size={16}
+                        className="text-emerald-600"
+                    />
+
+                </div>
+
+                <div>
+
+                    <p className="text-xs font-bold text-emerald-800">
+                        Secure payment
+                    </p>
+
+                    <p className="text-[11px] text-emerald-700/70 mt-0.5 leading-relaxed">
+                        Your payment information is protected with
+                        industry-standard security.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+)}
 
                                 </div>
 
                             </section>
-
 
                             {/* SECURITY */}
 
