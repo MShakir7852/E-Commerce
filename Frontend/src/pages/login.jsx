@@ -76,7 +76,7 @@ export function Login() {
                 }
             );
 
-            console.log("Backend Response:", res.data);
+            // console.log("Backend Response:", res.data);
 
             // =========================
             // LOGIN SUCCESS

@@ -189,7 +189,7 @@ const Checkout = () => {
                     },
                     withCredentials: true,
                 }
-            );c
+            );
 
             // ----------------------------------
             // SUCCESS

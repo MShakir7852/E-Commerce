@@ -20,9 +20,11 @@ const createOrder = async (req, res) => {
             trackingNumber,
         };
 
-    
+        // console.log("ORDER DATA:", orderData);
+
         const order = await orderService.createOrder(orderData);
 
+        // console.log("ORDER CREATED:", order);
 
         return res.status(201).json({
             statusText: "success",
@@ -31,12 +33,11 @@ const createOrder = async (req, res) => {
         });
 
     } catch (error) {
-
+        // console.error("CREATE ORDER ERROR:", error);
 
         return res.status(500).json({
             statusText: "error",
-            message: "Failed to create order",
-            error: error.message,
+            message: error.message || "Failed to create order",
         });
     }
 };

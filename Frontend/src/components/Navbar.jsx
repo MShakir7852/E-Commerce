@@ -62,20 +62,17 @@ function Navbar() {
                 }
             );
 
-            // Redux auth state clear
-            dispatch(logoutUser());
-
             toast.success("Logout successful");
-
-            navigate("/login");
-
         } catch (error) {
             console.log(
                 "Logout error:",
                 error.response?.data || error.message
             );
+        } finally {
+            // Always clear frontend auth state
+            dispatch(logoutUser());
 
-            toast.error("Logout failed");
+            navigate("/login");
         }
     };
 
