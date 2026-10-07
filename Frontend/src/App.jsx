@@ -17,6 +17,7 @@ import AddToCart from './pages/AddToCart'
 import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 import TrackOrder from "./pages/TrackOrder";
+import OrderSuccess from './pages/OrderSuccess';
 
 
 
@@ -44,6 +45,7 @@ function App() {
             path="/track-order"
             element={<TrackOrder />}
           />
+          <Route path='/order-success' element={<OrderSuccess/>}/>
         </Routes>
         <Footer />
       </BrowserRouter>
