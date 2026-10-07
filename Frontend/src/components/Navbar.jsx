@@ -10,6 +10,8 @@ import {
     Package,
     Menu,
     X,
+    Truck,
+    ChevronDown,
 } from "lucide-react";
 
 import { useNavigate, Link } from "react-router-dom";
@@ -29,7 +31,7 @@ function Navbar() {
 
     const [cartOpen, setCartOpen] = useState(false);
     const [mobileMenu, setMobileMenu] = useState(false);
-
+    const [profileOpen, setProfileOpen] = useState(false);
     // =========================
     // AUTH FROM REDUX
     // =========================
@@ -249,51 +251,295 @@ function Navbar() {
                             ========================= */}
 
                             {isLogin && user && (
-                                <div
-                                    className="
-                                        hidden
-                                        sm:flex
-                                        items-center
-                                        gap-3
-                                        px-3
-                                        py-2
-                                        rounded-xl
-                                        bg-gray-50
-                                        border
-                                        border-gray-200
-                                    "
-                                >
+                                <div className="relative hidden sm:block">
 
-                                    <div
+                                    {/* User Button */}
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setProfileOpen((prev) => !prev)
+                                        }
                                         className="
-                                            w-9
-                                            h-9
-                                            rounded-full
-                                            bg-gradient-to-br
-                                            from-blue-500
-                                            to-purple-600
-                                            flex
-                                            items-center
-                                            justify-center
-                                        "
+                flex
+                items-center
+                gap-3
+                px-3
+                py-2
+                rounded-xl
+                bg-gray-50
+                border
+                border-gray-200
+                hover:bg-white
+                hover:border-blue-200
+                hover:shadow-md
+                transition-all
+                duration-200
+            "
                                     >
-                                        <User
-                                            size={17}
-                                            className="text-white"
+
+                                        {/* Avatar */}
+                                        <div
+                                            className="
+                    w-9
+                    h-9
+                    rounded-full
+                    bg-gradient-to-br
+                    from-blue-500
+                    to-purple-600
+                    flex
+                    items-center
+                    justify-center
+                    shadow-sm
+                "
+                                        >
+                                            <User
+                                                size={17}
+                                                className="text-white"
+                                            />
+                                        </div>
+
+                                        {/* Name */}
+                                        <div className="text-left leading-tight">
+                                            <p className="text-[11px] text-gray-400">
+                                                Welcome
+                                            </p>
+
+                                            <p className="text-sm font-bold text-gray-800">
+                                                {user.firstName || "User"}
+                                            </p>
+                                        </div>
+
+                                        {/* Arrow */}
+                                        <ChevronDown
+                                            size={16}
+                                            className={`
+                    text-gray-400
+                    transition-transform
+                    duration-200
+                    ${profileOpen ? "rotate-180" : ""}
+                `}
                                         />
-                                    </div>
 
-                                    <div className="leading-tight">
+                                    </button>
 
-                                        <p className="text-[11px] text-gray-400">
-                                            Welcome
-                                        </p>
 
-                                        <p className="text-sm font-bold text-gray-800">
-                                            {user.firstName || "User"}
-                                        </p>
+                                    {/* Dropdown */}
+                                    {profileOpen && (
+                                        <div
+                                            className="
+                    absolute
+                    right-0
+                    top-[calc(100%+10px)]
+                    w-64
+                    bg-white/95
+                    backdrop-blur-xl
+                    border
+                    border-gray-200
+                    rounded-2xl
+                    shadow-2xl
+                    p-2
+                    z-[100]
+                    animate-in
+                    fade-in
+                    slide-in-from-top-2
+                    duration-200
+                "
+                                        >
 
-                                    </div>
+                                            {/* User Info */}
+                                            <div
+                                                className="
+                        px-3
+                        py-3
+                        mb-1
+                        rounded-xl
+                        bg-gradient-to-r
+                        from-blue-50
+                        to-purple-50
+                        border
+                        border-blue-100
+                    "
+                                            >
+                                                <p className="text-sm font-bold text-gray-900">
+                                                    {user.firstName || "User"}
+                                                    {user.lastName
+                                                        ? ` ${user.lastName}`
+                                                        : ""}
+                                                </p>
+
+                                                <p className="text-xs text-gray-500 truncate">
+                                                    {user.email}
+                                                </p>
+                                            </div>
+
+
+                                            {/* My Orders */}
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setProfileOpen(false);
+                                                    navigate("/my-orders");
+                                                }}
+                                                className="
+                        w-full
+                        flex
+                        items-center
+                        gap-3
+                        px-3
+                        py-3
+                        rounded-xl
+                        text-left
+                        text-sm
+                        font-medium
+                        text-gray-700
+                        hover:bg-blue-50
+                        hover:text-blue-600
+                        transition
+                    "
+                                            >
+                                                <div
+                                                    className="
+                            w-9
+                            h-9
+                            rounded-lg
+                            bg-blue-50
+                            flex
+                            items-center
+                            justify-center
+                        "
+                                                >
+                                                    <Package
+                                                        size={18}
+                                                        className="text-blue-600"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setProfileOpen(false);
+                                                            navigate("/My-Order");
+                                                        }}
+                                                        className="font-semibold">
+                                                        My Orders
+                                                    </button>
+
+                                                    <p className="text-[11px] text-gray-400">
+                                                        View your orders
+                                                    </p>
+                                                </div>
+                                            </button>
+
+
+                                            {/* Track Order */}
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setProfileOpen(false);
+                                                    navigate("/track-order");
+                                                }}
+                                                className="
+                        w-full
+                        flex
+                        items-center
+                        gap-3
+                        px-3
+                        py-3
+                        rounded-xl
+                        text-left
+                        text-sm
+                        font-medium
+                        text-gray-700
+                        hover:bg-purple-50
+                        hover:text-purple-600
+                        transition
+                    "
+                                            >
+                                                <div
+                                                    className="
+                            w-9
+                            h-9
+                            rounded-lg
+                            bg-purple-50
+                            flex
+                            items-center
+                            justify-center
+                        "
+                                                >
+                                                    <Truck
+                                                        size={18}
+                                                        className="text-purple-600"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <p className="font-semibold">
+                                                        Track My Order
+                                                    </p>
+
+                                                    <p className="text-[11px] text-gray-400">
+                                                        Track your package
+                                                    </p>
+                                                </div>
+                                            </button>
+
+
+                                            {/* Divider */}
+                                            <div className="my-2 border-t border-gray-100" />
+
+
+                                            {/* Logout */}
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setProfileOpen(false);
+                                                    Logout();
+                                                }}
+                                                className="
+                        w-full
+                        flex
+                        items-center
+                        gap-3
+                        px-3
+                        py-3
+                        rounded-xl
+                        text-left
+                        text-sm
+                        font-semibold
+                        text-red-600
+                        hover:bg-red-50
+                        transition
+                    "
+                                            >
+                                                <div
+                                                    className="
+                            w-9
+                            h-9
+                            rounded-lg
+                            bg-red-50
+                            flex
+                            items-center
+                            justify-center
+                        "
+                                                >
+                                                    <LogOut
+                                                        size={18}
+                                                        className="text-red-500"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <p>Logout</p>
+
+                                                    <p className="text-[11px] text-red-400">
+                                                        Sign out of your account
+                                                    </p>
+                                                </div>
+                                            </button>
+
+                                        </div>
+                                    )}
 
                                 </div>
                             )}

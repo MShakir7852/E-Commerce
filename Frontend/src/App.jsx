@@ -18,6 +18,7 @@ import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 import TrackOrder from "./pages/TrackOrder";
 import OrderSuccess from './pages/OrderSuccess';
+import MyOrders from './pages/MyOrders';
 
 
 
@@ -46,6 +47,7 @@ function App() {
             element={<TrackOrder />}
           />
           <Route path='/order-success' element={<OrderSuccess/>}/>
+          <Route path='/My-Orders' element={<MyOrders/>}/>
         </Routes>
         <Footer />
       </BrowserRouter>
