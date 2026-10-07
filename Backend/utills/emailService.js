@@ -13,39 +13,23 @@ const sendOrderConfirmationEmail = async ({
     customerName,
     order,
 }) => {
-    const itemsHtml = order.items
+    const itemsHTML = order.items
         .map(
             (item) => `
                 <tr>
-                    <td style="padding:14px 10px;border-bottom:1px solid #eee;">
-                        <div style="font-weight:600;color:#111827;">
-                            ${item.name}
-                        </div>
-                        ${
-                            item.size
-                                ? `<div style="font-size:12px;color:#6b7280;">
-                                    Size: ${item.size}
-                                   </div>`
-                                : ""
-                        }
-                        ${
-                            item.color
-                                ? `<div style="font-size:12px;color:#6b7280;">
-                                    Color: ${item.color}
-                                   </div>`
-                                : ""
-                        }
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">
+                        ${item.name || "Product"}
                     </td>
 
-                    <td style="padding:14px 10px;border-bottom:1px solid #eee;text-align:center;">
+                    <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">
                         ${item.quantity}
                     </td>
 
-                    <td style="padding:14px 10px;border-bottom:1px solid #eee;text-align:right;">
+                    <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">
                         Rs. ${Number(item.price).toLocaleString()}
                     </td>
 
-                    <td style="padding:14px 10px;border-bottom:1px solid #eee;text-align:right;font-weight:600;">
+                    <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">
                         Rs. ${(
                             Number(item.price) * Number(item.quantity)
                         ).toLocaleString()}
@@ -55,513 +39,291 @@ const sendOrderConfirmationEmail = async ({
         )
         .join("");
 
-    const html = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
+    const trackUrl = `${process.env.FRONTEND_URL}/track-order/${order.trackingNumber}`;
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>Order Confirmation</title>
-</head>
-
-<body
-    style="
-        margin:0;
-        padding:0;
-        background:#f3f4f6;
-        font-family:Arial,Helvetica,sans-serif;
-        color:#111827;
-    "
->
-
-<table
-    width="100%"
-    cellpadding="0"
-    cellspacing="0"
-    style="padding:40px 15px;background:#f3f4f6;"
->
-<tr>
-<td align="center">
-
-<table
-    width="100%"
-    cellpadding="0"
-    cellspacing="0"
-    style="
-        max-width:650px;
-        background:#ffffff;
-        border-radius:20px;
-        overflow:hidden;
-        box-shadow:0 10px 40px rgba(0,0,0,0.08);
-    "
->
-
-<!-- HEADER -->
-
-<tr>
-<td
-    style="
-        padding:35px 30px;
-        text-align:center;
-        background:linear-gradient(135deg,#2563eb,#7c3aed);
-    "
->
-
-<div
-    style="
-        width:60px;
-        height:60px;
-        margin:0 auto 15px;
-        border-radius:50%;
-        background:#ffffff;
-        color:#16a34a;
-        font-size:34px;
-        line-height:60px;
-        font-weight:bold;
-    "
->
-    ✓
-</div>
-
-<h1
-    style="
-        margin:0;
-        color:#ffffff;
-        font-size:28px;
-    "
->
-    Order Confirmed!
-</h1>
-
-<p
-    style="
-        margin:10px 0 0;
-        color:#e0e7ff;
-        font-size:15px;
-    "
->
-    Thank you for shopping with ShopZone
-</p>
-
-</td>
-</tr>
-
-
-<!-- CONTENT -->
-
-<tr>
-<td style="padding:35px 30px;">
-
-<p
-    style="
-        margin:0 0 10px;
-        font-size:17px;
-        color:#111827;
-    "
->
-    Hello <strong>${customerName || "Customer"}</strong>,
-</p>
-
-<p
-    style="
-        margin:0 0 25px;
-        color:#6b7280;
-        line-height:1.6;
-        font-size:14px;
-    "
->
-    Your order has been successfully placed. Below are your complete
-    order details.
-</p>
-
-
-<!-- ORDER INFO -->
-
-<table
-    width="100%"
-    cellpadding="0"
-    cellspacing="0"
-    style="
-        background:#f9fafb;
-        border-radius:14px;
-        margin-bottom:25px;
-    "
->
-
-<tr>
-<td style="padding:18px;">
-
-<table width="100%" cellpadding="0" cellspacing="0">
-
-<tr>
-<td
-    style="
-        color:#6b7280;
-        font-size:12px;
-        padding-bottom:10px;
-    "
->
-    ORDER ID
-</td>
-
-<td
-    style="
-        color:#6b7280;
-        font-size:12px;
-        padding-bottom:10px;
-        text-align:right;
-    "
->
-    TRACKING NUMBER
-</td>
-</tr>
-
-<tr>
-
-<td
-    style="
-        font-weight:bold;
-        color:#111827;
-    "
->
-    #${order._id}
-</td>
-
-<td
-    style="
-        font-weight:bold;
-        color:#2563eb;
-        text-align:right;
-    "
->
-    ${order.trackingNumber}
-</td>
-
-</tr>
-
-</table>
-
-</td>
-</tr>
-
-</table>
-
-
-<!-- PRODUCTS -->
-
-<h2
-    style="
-        font-size:17px;
-        margin:0 0 12px;
-        color:#111827;
-    "
->
-    Order Items
-</h2>
-
-<table
-    width="100%"
-    cellpadding="0"
-    cellspacing="0"
-    style="
-        border-collapse:collapse;
-        font-size:13px;
-    "
->
-
-<tr style="background:#f9fafb;">
-
-<th
-    style="
-        padding:12px 10px;
-        text-align:left;
-        color:#6b7280;
-        font-size:11px;
-    "
->
-    PRODUCT
-</th>
-
-<th
-    style="
-        padding:12px 10px;
-        color:#6b7280;
-        font-size:11px;
-    "
->
-    QTY
-</th>
-
-<th
-    style="
-        padding:12px 10px;
-        text-align:right;
-        color:#6b7280;
-        font-size:11px;
-    "
->
-    PRICE
-</th>
-
-<th
-    style="
-        padding:12px 10px;
-        text-align:right;
-        color:#6b7280;
-        font-size:11px;
-    "
->
-    TOTAL
-</th>
-
-</tr>
-
-${itemsHtml}
-
-</table>
-
-
-<!-- PRICE SUMMARY -->
-
-<table
-    width="100%"
-    cellpadding="0"
-    cellspacing="0"
-    style="margin-top:25px;"
->
-
-<tr>
-<td
-    style="
-        padding:7px 0;
-        color:#6b7280;
-        font-size:14px;
-    "
->
-    Subtotal
-</td>
-
-<td
-    style="
-        padding:7px 0;
-        text-align:right;
-        font-size:14px;
-    "
->
-    Rs. ${Number(order.subtotal).toLocaleString()}
-</td>
-</tr>
-
-<tr>
-<td
-    style="
-        padding:7px 0;
-        color:#6b7280;
-        font-size:14px;
-    "
->
-    Shipping
-</td>
-
-<td
-    style="
-        padding:7px 0;
-        text-align:right;
-        font-size:14px;
-    "
->
-    Rs. ${Number(order.shippingFee).toLocaleString()}
-</td>
-</tr>
-
-<tr>
-<td
-    style="
-        border-top:1px solid #e5e7eb;
-        padding:15px 0 7px;
-        font-size:17px;
-        font-weight:bold;
-    "
->
-    Total
-</td>
-
-<td
-    style="
-        border-top:1px solid #e5e7eb;
-        padding:15px 0 7px;
-        text-align:right;
-        font-size:19px;
-        font-weight:bold;
-        color:#2563eb;
-    "
->
-    Rs. ${Number(order.total).toLocaleString()}
-</td>
-</tr>
-
-</table>
-
-
-<!-- SHIPPING ADDRESS -->
-
-<div
-    style="
-        margin-top:25px;
-        padding:18px;
-        border:1px solid #e5e7eb;
-        border-radius:14px;
-    "
->
-
-<h3
-    style="
-        margin:0 0 10px;
-        font-size:15px;
-    "
->
-    Shipping Address
-</h3>
-
-<p
-    style="
-        margin:0;
-        color:#6b7280;
-        font-size:14px;
-        line-height:1.6;
-    "
->
-    ${order.shippingAddress?.fullName || customerName}<br>
-    ${order.shippingAddress?.phone || ""}<br>
-    ${order.shippingAddress?.address || ""}<br>
-    ${order.shippingAddress?.city || ""}
-    ${
-        order.shippingAddress?.postalCode
-            ? ` - ${order.shippingAddress.postalCode}`
-            : ""
-    }
-</p>
-
-</div>
-
-
-<!-- PAYMENT -->
-
-<div
-    style="
-        margin-top:15px;
-        padding:15px 18px;
-        background:#f9fafb;
-        border-radius:12px;
-    "
->
-
-<span
-    style="
-        color:#6b7280;
-        font-size:13px;
-    "
->
-    Payment Method
-</span>
-
-<strong
-    style="
-        float:right;
-        font-size:13px;
-        color:#111827;
-    "
->
-    ${order.paymentMethod || "Cash on Delivery"}
-</strong>
-
-</div>
-
-
-<!-- TRACK BUTTON -->
-
-<div style="text-align:center;margin-top:30px;">
-
-<a
-    href="http://localhost:5173/track-order/${order.trackingNumber}"
-    style="
-        display:inline-block;
-        padding:14px 28px;
-        background:#2563eb;
-        color:#ffffff;
-        text-decoration:none;
-        border-radius:10px;
-        font-weight:bold;
-        font-size:14px;
-    "
->
-    Track My Order →
-</a>
-
-</div>
-
-</td>
-</tr>
-
-
-<!-- FOOTER -->
-
-<tr>
-<td
-    style="
-        padding:25px 30px;
-        background:#f9fafb;
-        text-align:center;
-    "
->
-
-<p
-    style="
-        margin:0 0 5px;
-        font-size:13px;
-        color:#6b7280;
-    "
->
-    Thank you for choosing
-    <strong style="color:#2563eb;">
-        ShopZone
-    </strong>
-</p>
-
-<p
-    style="
-        margin:0;
-        font-size:11px;
-        color:#9ca3af;
-    "
->
-    This is an automated order confirmation email.
-</p>
-
-</td>
-</tr>
-
-</table>
-
-</td>
-</tr>
-</table>
-
-</body>
-</html>
-`;
-
-    await transporter.sendMail({
+    const mailOptions = {
         from: `"ShopZone" <${process.env.EMAIL_USER}>`,
         to: customerEmail,
-        subject: `Order Confirmed #${order.trackingNumber} | ShopZone`,
-        html,
-    });
+        subject: `Order Confirmed - ${order.trackingNumber}`,
+        html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <title>Order Confirmation</title>
+            </head>
+
+            <body style="
+                margin: 0;
+                padding: 0;
+                background: #f4f7fb;
+                font-family: Arial, Helvetica, sans-serif;
+                color: #1f2937;
+            ">
+
+                <div style="
+                    max-width: 700px;
+                    margin: 40px auto;
+                    background: #ffffff;
+                    border-radius: 20px;
+                    overflow: hidden;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+                ">
+
+                    <!-- Header -->
+                    <div style="
+                        background: linear-gradient(135deg, #111827, #374151);
+                        padding: 35px;
+                        text-align: center;
+                        color: white;
+                    ">
+                        <h1 style="
+                            margin: 0;
+                            font-size: 30px;
+                        ">
+                            ShopZone
+                        </h1>
+
+                        <p style="
+                            margin: 8px 0 0;
+                            color: #d1d5db;
+                        ">
+                            Your trusted online store
+                        </p>
+                    </div>
+
+                    <!-- Success -->
+                    <div style="
+                        padding: 40px 30px 20px;
+                        text-align: center;
+                    ">
+
+                        <div style="
+                            width: 70px;
+                            height: 70px;
+                            margin: auto;
+                            border-radius: 50%;
+                            background: #dcfce7;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 38px;
+                        ">
+                            ✓
+                        </div>
+
+                        <h2 style="
+                            margin: 20px 0 8px;
+                            font-size: 26px;
+                            color: #111827;
+                        ">
+                            Order Placed Successfully!
+                        </h2>
+
+                        <p style="
+                            color: #6b7280;
+                            font-size: 15px;
+                        ">
+                            Hi ${customerName || "Customer"}, thank you for shopping with us.
+                        </p>
+                    </div>
+
+                    <!-- Order Info -->
+                    <div style="padding: 20px 30px;">
+
+                        <div style="
+                            background: #f9fafb;
+                            border-radius: 14px;
+                            padding: 20px;
+                        ">
+
+                            <p style="margin: 0 0 10px;">
+                                <strong>Order ID:</strong>
+                                ${order._id}
+                            </p>
+
+                            <p style="margin: 0 0 10px;">
+                                <strong>Tracking Number:</strong>
+                                ${order.trackingNumber}
+                            </p>
+
+                            <p style="margin: 0;">
+                                <strong>Payment Method:</strong>
+                                ${order.paymentMethod}
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <!-- Products -->
+                    <div style="padding: 10px 30px 30px;">
+
+                        <h3 style="
+                            margin-bottom: 15px;
+                            color: #111827;
+                        ">
+                            Order Details
+                        </h3>
+
+                        <table style="
+                            width: 100%;
+                            border-collapse: collapse;
+                            font-size: 14px;
+                        ">
+
+                            <thead>
+                                <tr style="background: #f9fafb;">
+                                    <th style="padding: 12px; text-align: left;">
+                                        Product
+                                    </th>
+
+                                    <th style="padding: 12px; text-align: center;">
+                                        Qty
+                                    </th>
+
+                                    <th style="padding: 12px; text-align: right;">
+                                        Price
+                                    </th>
+
+                                    <th style="padding: 12px; text-align: right;">
+                                        Total
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                ${itemsHTML}
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    <!-- Summary -->
+                    <div style="padding: 0 30px 30px;">
+
+                        <div style="
+                            background: #f9fafb;
+                            border-radius: 14px;
+                            padding: 20px;
+                        ">
+
+                            <div style="
+                                display: flex;
+                                justify-content: space-between;
+                                margin-bottom: 10px;
+                            ">
+                                <span>Subtotal</span>
+                                <strong>
+                                    Rs. ${Number(order.subtotal).toLocaleString()}
+                                </strong>
+                            </div>
+
+                            <div style="
+                                display: flex;
+                                justify-content: space-between;
+                                margin-bottom: 10px;
+                            ">
+                                <span>Shipping</span>
+                                <strong>
+                                    Rs. ${Number(order.shippingFee).toLocaleString()}
+                                </strong>
+                            </div>
+
+                            <hr style="
+                                border: none;
+                                border-top: 1px solid #ddd;
+                                margin: 15px 0;
+                            " />
+
+                            <div style="
+                                display: flex;
+                                justify-content: space-between;
+                                font-size: 18px;
+                            ">
+                                <strong>Total</strong>
+
+                                <strong>
+                                    Rs. ${Number(order.total).toLocaleString()}
+                                </strong>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- Shipping Address -->
+                    <div style="padding: 0 30px 30px;">
+
+                        <h3>Shipping Address</h3>
+
+                        <div style="
+                            background: #f9fafb;
+                            padding: 18px;
+                            border-radius: 12px;
+                            line-height: 1.6;
+                        ">
+                            ${order.shippingAddress?.fullName || customerName}<br />
+                            ${order.shippingAddress?.phone || ""}<br />
+                            ${order.shippingAddress?.address || ""}<br />
+                            ${order.shippingAddress?.city || ""}<br />
+                            ${order.shippingAddress?.postalCode || ""}
+                        </div>
+
+                    </div>
+
+                    <!-- Track Button -->
+                    <div style="
+                        text-align: center;
+                        padding: 10px 30px 40px;
+                    ">
+
+                        <a
+                            href="${trackUrl}"
+                            style="
+                                display: inline-block;
+                                padding: 14px 28px;
+                                background: #111827;
+                                color: white;
+                                text-decoration: none;
+                                border-radius: 10px;
+                                font-weight: bold;
+                            "
+                        >
+                            Track Your Order
+                        </a>
+
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="
+                        background: #f9fafb;
+                        padding: 25px;
+                        text-align: center;
+                        color: #6b7280;
+                        font-size: 13px;
+                    ">
+                        <p style="margin: 0 0 6px;">
+                            Thank you for choosing ShopZone.
+                        </p>
+
+                        <p style="margin: 0;">
+                            © ${new Date().getFullYear()} ShopZone. All rights reserved.
+                        </p>
+                    </div>
+
+                </div>
+
+            </body>
+            </html>
+        `,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    console.log("Order confirmation email sent to:", customerEmail);
 };
 
 module.exports = {

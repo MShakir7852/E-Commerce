@@ -1,14 +1,12 @@
 const Order = require("../models/orderModel");
 
-const {
-    sendOrderConfirmationEmail,
-} = require("../utills/emailService.js");
+const sendOrderConfirmationEmail= require("../utills/emailService.js");
 const createOrder = async (orderData) => {
-
+ 
     const order = await Order.create(orderData);
-    try {
+   try {
         await sendOrderConfirmationEmail({
-            customerEmail: orderData.user.email,
+            customerEmail: orderData.user?.email,
             customerName: orderData.shippingAddress.fullName,
             order,
         });
