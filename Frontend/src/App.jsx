@@ -19,6 +19,7 @@ import NotFound from "./pages/NotFound";
 import TrackOrder from "./pages/TrackOrder";
 import OrderSuccess from './pages/OrderSuccess';
 import MyOrders from './pages/MyOrders';
+import AdminDashboard from './pages/AdminDashboard';
 
 
 
@@ -48,6 +49,7 @@ function App() {
           />
           <Route path='/order-success' element={<OrderSuccess/>}/>
           <Route path='/My-Orders' element={<MyOrders/>}/>
+          <Route path='/Dashboard' element={<AdminDashboard/>}/>
         </Routes>
         <Footer />
       </BrowserRouter>
