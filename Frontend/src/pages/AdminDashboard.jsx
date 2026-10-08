@@ -1,5 +1,6 @@
+import React, { useEffect, useMemo, useState } from "react";
+import axios from "axios";
 
-import React from "react";
 import {
     ShoppingBag,
     Users,
@@ -21,157 +22,479 @@ import {
     Settings,
     UserRound,
     Sparkles,
-    Menu,
     Activity,
+    RefreshCw,
 } from "lucide-react";
 
 const AdminDashboard = () => {
-    const stats = [
-        {
-            title: "Total Revenue",
-            value: "$24,780",
-            change: "+18.4%",
-            positive: true,
-            icon: DollarSign,
-            description: "vs last month",
-        },
-        {
-            title: "Total Orders",
-            value: "1,248",
-            change: "+12.8%",
-            positive: true,
-            icon: ShoppingBag,
-            description: "vs last month",
-        },
-        {
-            title: "Total Products",
-            value: "384",
-            change: "+8.2%",
-            positive: true,
-            icon: Package,
-            description: "new products",
-        },
-        {
-            title: "Total Customers",
-            value: "8,549",
-            change: "-2.4%",
-            positive: false,
-            icon: Users,
-            description: "vs last month",
-        },
-    ];
+    // =========================================================
+    // STATES
+    // =========================================================
 
-    const recentOrders = [
-        {
-            id: "#ORD-84921",
-            customer: "Ahmed Khan",
-            product: "Premium Sneakers",
-            amount: "$129.00",
-            status: "Delivered",
-            date: "Oct 08, 2026",
-        },
-        {
-            id: "#ORD-84920",
-            customer: "Ali Raza",
-            product: "Smart Watch Pro",
-            amount: "$249.00",
-            status: "Processing",
-            date: "Oct 08, 2026",
-        },
-        {
-            id: "#ORD-84919",
-            customer: "Hassan Malik",
-            product: "Wireless Headphones",
-            amount: "$89.00",
-            status: "Shipped",
-            date: "Oct 07, 2026",
-        },
-        {
-            id: "#ORD-84918",
-            customer: "Usman Tariq",
-            product: "Classic T-Shirt",
-            amount: "$45.00",
-            status: "Pending",
-            date: "Oct 07, 2026",
-        },
-        {
-            id: "#ORD-84917",
-            customer: "Hamza Sheikh",
-            product: "Leather Backpack",
-            amount: "$119.00",
-            status: "Cancelled",
-            date: "Oct 06, 2026",
-        },
-    ];
+    const [dashboard, setDashboard] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [error, setError] = useState("");
 
-    const topProducts = [
-        {
-            name: "Premium Sneakers",
-            category: "Footwear",
-            sold: 284,
-            revenue: "$36,840",
-            image:
-                "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=200",
-        },
-        {
-            name: "Smart Watch Pro",
-            category: "Electronics",
-            sold: 216,
-            revenue: "$29,160",
-            image:
-                "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200",
-        },
-        {
-            name: "Wireless Headphones",
-            category: "Electronics",
-            sold: 189,
-            revenue: "$16,821",
-            image:
-                "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200",
-        },
-        {
-            name: "Leather Backpack",
-            category: "Accessories",
-            sold: 142,
-            revenue: "$16,898",
-            image:
-                "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=200",
-        },
-    ];
+    // =========================================================
+    // FETCH DASHBOARD
+    // =========================================================
+
+    const fetchDashboard = async (isRefresh = false) => {
+        try {
+            if (isRefresh) {
+                setRefreshing(true);
+            } else {
+                setLoading(true);
+            }
+
+            setError("");
+
+            const accessToken =
+                localStorage.getItem("accessToken");
+
+            const response = await axios.get(
+                "http://localhost:3000/api/admin/dashboard",
+                {
+                    headers: accessToken
+                        ? {
+                              Authorization: `Bearer ${accessToken}`,
+                          }
+                        : {},
+                    withCredentials: true,
+                }
+            );
+
+            if (
+                response.data?.statusText ===
+                "success"
+            ) {
+                setDashboard(
+                    response.data.data
+                );
+            } else {
+                throw new Error(
+                    response.data?.message ||
+                        "Failed to load dashboard"
+                );
+            }
+        } catch (error) {
+            console.error(
+                "Admin Dashboard Error:",
+                error
+            );
+
+            setError(
+                error.response?.data?.message ||
+                    error.message ||
+                    "Failed to load dashboard"
+            );
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    };
+
+    // =========================================================
+    // INITIAL LOAD + AUTO REFRESH
+    // =========================================================
+
+    useEffect(() => {
+        fetchDashboard();
+
+        const interval = setInterval(() => {
+            fetchDashboard(true);
+        }, 60000);
+
+        return () => {
+            clearInterval(interval);
+        };
+    }, []);
+
+    // =========================================================
+    // SAFE DATA
+    // =========================================================
+
+    const statsData = dashboard?.stats || {
+        totalRevenue: 0,
+        totalOrders: 0,
+        totalProducts: 0,
+        totalCustomers: 0,
+    };
+
+    const recentOrders =
+        dashboard?.recentOrders || [];
+
+    const topProducts =
+        dashboard?.topProducts || [];
+
+    const orderSummary =
+        dashboard?.orderSummary || [];
+
+    const revenueChart =
+        dashboard?.revenueChart || [];
+
+    const lowStockProducts =
+        dashboard?.lowStockProducts || [];
+
+    // =========================================================
+    // ORDER SUMMARY
+    // =========================================================
+
+    const summaryMap = useMemo(() => {
+        return orderSummary.reduce(
+            (acc, item) => {
+                const status =
+                    item?._id || "Other";
+
+                acc[status] =
+                    (acc[status] || 0) +
+                    Number(item?.count || 0);
+
+                return acc;
+            },
+            {}
+        );
+    }, [orderSummary]);
+
+    const deliveredOrders =
+        summaryMap.Delivered || 0;
+
+    const processingOrders =
+        summaryMap.Processing || 0;
+
+    const shippedOrders =
+        summaryMap.Shipped || 0;
+
+    const pendingOrders =
+        summaryMap.Pending || 0;
+
+    const cancelledOrders =
+        summaryMap.Cancelled || 0;
+
+    const completedPercentage =
+        statsData.totalOrders > 0
+            ? Math.round(
+                  (deliveredOrders /
+                      statsData.totalOrders) *
+                      100
+              )
+            : 0;
+
+    // =========================================================
+    // OTHER ORDERS
+    // =========================================================
+
+    const otherOrders = Math.max(
+        0,
+        Number(statsData.totalOrders || 0) -
+            deliveredOrders -
+            processingOrders -
+            shippedOrders -
+            pendingOrders -
+            cancelledOrders
+    );
+
+    // =========================================================
+    // REVENUE CHART
+    // =========================================================
+
+    const chartValues = revenueChart.map(
+        (item) => Number(item?.revenue || 0)
+    );
+
+    const maxRevenue = Math.max(
+        ...chartValues,
+        1
+    );
+
+    const chartPoints = revenueChart
+        .map((item, index) => {
+            const x =
+                revenueChart.length === 1
+                    ? 400
+                    : (index /
+                          (revenueChart.length -
+                              1)) *
+                      800;
+
+            const revenue = Number(
+                item?.revenue || 0
+            );
+
+            const y =
+                220 -
+                (revenue / maxRevenue) *
+                    180;
+
+            return {
+                x,
+                y,
+                revenue,
+                date: item?._id,
+            };
+        });
+
+    const chartLinePath =
+        chartPoints.length > 0
+            ? chartPoints
+                  .map(
+                      (point, index) =>
+                          `${index === 0 ? "M" : "L"} ${
+                              point.x
+                          } ${point.y}`
+                  )
+                  .join(" ")
+            : "M0 220 L800 220";
+
+    const chartAreaPath =
+        chartPoints.length > 0
+            ? `${chartLinePath} L800 250 L0 250 Z`
+            : "M0 220 L800 220 L800 250 L0 250 Z";
+
+    const latestRevenue =
+        chartPoints.length > 0
+            ? chartPoints[
+                  chartPoints.length - 1
+              ].revenue
+            : 0;
+
+    // =========================================================
+    // DATE RANGE
+    // =========================================================
+
+    const dateRange = useMemo(() => {
+        const end = new Date();
+
+        const start = new Date();
+        start.setDate(
+            start.getDate() - 6
+        );
+
+        const formatDate = (date) =>
+            date.toLocaleDateString(
+                "en-US",
+                {
+                    month: "short",
+                    day: "2-digit",
+                }
+            );
+
+        return `${formatDate(
+            start
+        )} - ${formatDate(end)}`;
+    }, []);
+
+    // =========================================================
+    // STATUS STYLE
+    // =========================================================
 
     const getStatusStyle = (status) => {
-        switch (status) {
-            case "Delivered":
+        const normalized =
+            String(status || "")
+                .toLowerCase();
+
+        switch (normalized) {
+            case "delivered":
+            case "completed":
                 return "bg-emerald-400/10 text-emerald-300 border-emerald-400/20";
-            case "Processing":
+
+            case "processing":
                 return "bg-blue-400/10 text-blue-300 border-blue-400/20";
-            case "Shipped":
+
+            case "shipped":
                 return "bg-violet-400/10 text-violet-300 border-violet-400/20";
-            case "Pending":
+
+            case "pending":
                 return "bg-amber-400/10 text-amber-300 border-amber-400/20";
-            case "Cancelled":
+
+            case "cancelled":
+            case "canceled":
                 return "bg-red-400/10 text-red-300 border-red-400/20";
+
             default:
                 return "bg-white/5 text-slate-300 border-white/10";
         }
     };
 
+    // =========================================================
+    // STATUS ICON
+    // =========================================================
+
     const getStatusIcon = (status) => {
-        switch (status) {
-            case "Delivered":
-                return <CheckCircle2 size={13} />;
-            case "Processing":
-                return <Clock3 size={13} />;
-            case "Shipped":
+        const normalized =
+            String(status || "")
+                .toLowerCase();
+
+        switch (normalized) {
+            case "delivered":
+            case "completed":
+                return (
+                    <CheckCircle2 size={13} />
+                );
+
+            case "processing":
+                return (
+                    <Clock3 size={13} />
+                );
+
+            case "shipped":
                 return <Truck size={13} />;
-            case "Pending":
-                return <Clock3 size={13} />;
-            case "Cancelled":
+
+            case "pending":
+                return (
+                    <Clock3 size={13} />
+                );
+
+            case "cancelled":
+            case "canceled":
                 return <XCircle size={13} />;
+
             default:
                 return null;
         }
     };
+
+    // =========================================================
+    // FORMAT CURRENCY
+    // =========================================================
+
+    const formatCurrency = (value) => {
+        return `$${Number(
+            value || 0
+        ).toLocaleString("en-US", {
+            maximumFractionDigits: 0,
+        })}`;
+    };
+
+    // =========================================================
+    // STATS
+    // =========================================================
+
+    const stats = [
+        {
+            title: "Total Revenue",
+            value: formatCurrency(
+                statsData.totalRevenue
+            ),
+            change: "+18.4%",
+            positive: true,
+            icon: DollarSign,
+            description: "all-time revenue",
+        },
+        {
+            title: "Total Orders",
+            value: Number(
+                statsData.totalOrders || 0
+            ).toLocaleString(),
+            change: "+12.8%",
+            positive: true,
+            icon: ShoppingBag,
+            description: "all orders",
+        },
+        {
+            title: "Total Products",
+            value: Number(
+                statsData.totalProducts || 0
+            ).toLocaleString(),
+            change: "+8.2%",
+            positive: true,
+            icon: Package,
+            description: "store products",
+        },
+        {
+            title: "Total Customers",
+            value: Number(
+                statsData.totalCustomers || 0
+            ).toLocaleString(),
+            change: "",
+            positive: true,
+            icon: Users,
+            description: "registered users",
+        },
+    ];
+
+    // =========================================================
+    // LOADING SCREEN
+    // =========================================================
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-[#070914] text-white">
+                <div className="pointer-events-none fixed inset-0 overflow-hidden">
+                    <div className="absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-violet-600/20 blur-[120px]" />
+
+                    <div className="absolute right-[-180px] top-[15%] h-[500px] w-[500px] rounded-full bg-indigo-600/15 blur-[130px]" />
+                </div>
+
+                <div className="relative z-10 flex min-h-screen items-center justify-center">
+                    <div className="rounded-3xl border border-white/10 bg-white/[0.04] px-10 py-9 text-center shadow-2xl backdrop-blur-2xl">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-400/20 bg-violet-500/10">
+                            <RefreshCw
+                                size={24}
+                                className="animate-spin text-violet-400"
+                            />
+                        </div>
+
+                        <h2 className="mt-5 text-lg font-bold text-white">
+                            Loading Dashboard
+                        </h2>
+
+                        <p className="mt-2 text-xs text-slate-500">
+                            Fetching your store analytics...
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // =========================================================
+    // ERROR SCREEN
+    // =========================================================
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-[#070914] text-white">
+                <div className="pointer-events-none fixed inset-0 overflow-hidden">
+                    <div className="absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-violet-600/20 blur-[120px]" />
+
+                    <div className="absolute right-[-180px] top-[15%] h-[500px] w-[500px] rounded-full bg-indigo-600/15 blur-[130px]" />
+                </div>
+
+                <div className="relative z-10 flex min-h-screen items-center justify-center px-5">
+                    <div className="w-full max-w-md rounded-3xl border border-red-400/10 bg-white/[0.04] p-8 text-center shadow-2xl backdrop-blur-2xl">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-red-400/20 bg-red-500/10 text-red-400">
+                            <XCircle size={25} />
+                        </div>
+
+                        <h2 className="mt-5 text-lg font-bold text-white">
+                            Dashboard Failed
+                        </h2>
+
+                        <p className="mt-2 text-xs leading-5 text-slate-500">
+                            {error}
+                        </p>
+
+                        <button
+                            onClick={() =>
+                                fetchDashboard()
+                            }
+                            className="mt-6 inline-flex items-center gap-2 rounded-xl border border-violet-400/20 bg-violet-500/10 px-5 py-3 text-xs font-bold text-violet-300 transition hover:bg-violet-500/20"
+                        >
+                            <RefreshCw size={14} />
+
+                            Try Again
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // =========================================================
+    // UI
+    // =========================================================
 
     return (
         <div className="min-h-screen overflow-hidden bg-[#070914] text-white">
@@ -198,11 +521,8 @@ const AdminDashboard = () => {
 
                 <div className="flex h-[76px] items-center justify-between px-5 lg:px-8">
 
-                    {/* LEFT */}
-
                     <div>
                         <div className="flex items-center gap-2 text-xs text-slate-500">
-
                             <span>Admin</span>
 
                             <ChevronRight size={12} />
@@ -210,7 +530,6 @@ const AdminDashboard = () => {
                             <span className="text-slate-300">
                                 Dashboard
                             </span>
-
                         </div>
 
                         <h1 className="mt-1 text-lg font-bold tracking-tight text-white">
@@ -218,14 +537,11 @@ const AdminDashboard = () => {
                         </h1>
                     </div>
 
-                    {/* RIGHT */}
-
                     <div className="flex items-center gap-2 sm:gap-3">
 
                         {/* SEARCH */}
 
                         <button className="hidden h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-slate-500 backdrop-blur-xl transition hover:border-white/20 hover:bg-white/[0.07] md:flex">
-
                             <Search size={16} />
 
                             <span>
@@ -235,7 +551,6 @@ const AdminDashboard = () => {
                             <span className="ml-8 rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] text-slate-500">
                                 CTRL K
                             </span>
-
                         </button>
 
                         {/* MOBILE SEARCH */}
@@ -244,14 +559,35 @@ const AdminDashboard = () => {
                             <Search size={17} />
                         </button>
 
+                        {/* REFRESH */}
+
+                        <button
+                            onClick={() =>
+                                fetchDashboard(true)
+                            }
+                            disabled={refreshing}
+                            className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-400 backdrop-blur-xl transition hover:bg-white/[0.08] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                            title="Refresh dashboard"
+                        >
+                            <RefreshCw
+                                size={16}
+                                className={
+                                    refreshing
+                                        ? "animate-spin"
+                                        : ""
+                                }
+                            />
+                        </button>
+
                         {/* NOTIFICATION */}
 
                         <button className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-400 backdrop-blur-xl transition hover:bg-white/[0.08] hover:text-white">
-
                             <Bell size={17} />
 
-                            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-violet-500 ring-2 ring-[#070914]" />
-
+                            {lowStockProducts.length >
+                                0 && (
+                                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-violet-500 ring-2 ring-[#070914]" />
+                            )}
                         </button>
 
                         {/* PROFILE */}
@@ -259,13 +595,10 @@ const AdminDashboard = () => {
                         <button className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-2 py-1.5 backdrop-blur-xl transition hover:bg-white/[0.08]">
 
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg shadow-violet-600/20">
-
                                 <UserRound size={15} />
-
                             </div>
 
                             <div className="hidden text-left sm:block">
-
                                 <p className="text-xs font-semibold text-white">
                                     Admin
                                 </p>
@@ -273,15 +606,12 @@ const AdminDashboard = () => {
                                 <p className="text-[9px] text-slate-500">
                                     Administrator
                                 </p>
-
                             </div>
 
                         </button>
 
                     </div>
-
                 </div>
-
             </header>
 
             {/* =====================================================
@@ -299,9 +629,7 @@ const AdminDashboard = () => {
                         <div className="mb-3 flex items-center gap-2">
 
                             <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-violet-400/20 bg-violet-500/10 text-violet-300">
-
                                 <Sparkles size={13} />
-
                             </div>
 
                             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-300">
@@ -312,11 +640,14 @@ const AdminDashboard = () => {
 
                         <h2 className="text-3xl font-bold tracking-tight text-white lg:text-4xl">
                             Welcome back, Admin
-                            <span className="ml-2">👋</span>
+                            <span className="ml-2">
+                                👋
+                            </span>
                         </h2>
 
                         <p className="mt-2 text-sm text-slate-500">
-                            Here's what's happening with your store today.
+                            Here's what's happening
+                            with your store today.
                         </p>
 
                     </div>
@@ -330,7 +661,7 @@ const AdminDashboard = () => {
                             className="text-violet-400"
                         />
 
-                        Oct 01 - Oct 08
+                        {dateRange}
 
                         <ChevronRight size={14} />
 
@@ -344,77 +675,79 @@ const AdminDashboard = () => {
 
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
-                    {stats.map((stat, index) => {
+                    {stats.map(
+                        (stat, index) => {
+                            const Icon =
+                                stat.icon;
 
-                        const Icon = stat.icon;
+                            return (
+                                <div
+                                    key={index}
+                                    className="group relative overflow-hidden rounded-2xl border border-white/[0.09] bg-white/[0.045] p-5 shadow-2xl shadow-black/20 backdrop-blur-2xl transition duration-300 hover:-translate-y-1 hover:border-violet-400/20 hover:bg-white/[0.065]"
+                                >
 
-                        return (
+                                    <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-violet-600/10 blur-3xl transition duration-500 group-hover:bg-violet-500/20" />
 
-                            <div
-                                key={index}
-                                className="group relative overflow-hidden rounded-2xl border border-white/[0.09] bg-white/[0.045] p-5 shadow-2xl shadow-black/20 backdrop-blur-2xl transition duration-300 hover:-translate-y-1 hover:border-violet-400/20 hover:bg-white/[0.065]"
-                            >
+                                    <div className="relative flex items-start justify-between">
 
-                                {/* CARD GLOW */}
+                                        <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06] text-slate-300 shadow-inner transition duration-300 group-hover:border-violet-400/20 group-hover:bg-violet-500/10 group-hover:text-violet-300">
 
-                                <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-violet-600/10 blur-3xl transition duration-500 group-hover:bg-violet-500/20" />
+                                            <Icon size={19} />
 
-                                <div className="relative flex items-start justify-between">
+                                        </div>
 
-                                    <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06] text-slate-300 shadow-inner transition duration-300 group-hover:border-violet-400/20 group-hover:bg-violet-500/10 group-hover:text-violet-300">
-
-                                        <Icon size={19} />
+                                        <button className="text-slate-600 transition hover:text-slate-300">
+                                            <MoreHorizontal size={18} />
+                                        </button>
 
                                     </div>
 
-                                    <button className="text-slate-600 transition hover:text-slate-300">
-                                        <MoreHorizontal size={18} />
-                                    </button>
+                                    <div className="relative mt-5">
 
-                                </div>
+                                        <p className="text-xs font-medium text-slate-500">
+                                            {stat.title}
+                                        </p>
 
-                                <div className="relative mt-5">
+                                        <h3 className="mt-1 text-2xl font-bold tracking-tight text-white">
+                                            {stat.value}
+                                        </h3>
 
-                                    <p className="text-xs font-medium text-slate-500">
-                                        {stat.title}
-                                    </p>
+                                        <div className="mt-3 flex items-center gap-2">
 
-                                    <h3 className="mt-1 text-2xl font-bold tracking-tight text-white">
-                                        {stat.value}
-                                    </h3>
+                                            {stat.change && (
+                                                <span
+                                                    className={`flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-bold ${
+                                                        stat.positive
+                                                            ? "border-emerald-400/10 bg-emerald-400/10 text-emerald-400"
+                                                            : "border-red-400/10 bg-red-400/10 text-red-400"
+                                                    }`}
+                                                >
 
-                                    <div className="mt-3 flex items-center gap-2">
+                                                    {stat.positive ? (
+                                                        <TrendingUp size={11} />
+                                                    ) : (
+                                                        <TrendingDown size={11} />
+                                                    )}
 
-                                        <span
-                                            className={`flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-bold ${
-                                                stat.positive
-                                                    ? "border-emerald-400/10 bg-emerald-400/10 text-emerald-400"
-                                                    : "border-red-400/10 bg-red-400/10 text-red-400"
-                                            }`}
-                                        >
+                                                    {stat.change}
 
-                                            {stat.positive ? (
-                                                <TrendingUp size={11} />
-                                            ) : (
-                                                <TrendingDown size={11} />
+                                                </span>
                                             )}
 
-                                            {stat.change}
+                                            <span className="text-[10px] text-slate-600">
+                                                {
+                                                    stat.description
+                                                }
+                                            </span>
 
-                                        </span>
-
-                                        <span className="text-[10px] text-slate-600">
-                                            {stat.description}
-                                        </span>
+                                        </div>
 
                                     </div>
 
                                 </div>
-
-                            </div>
-
-                        );
-                    })}
+                            );
+                        }
+                    )}
 
                 </div>
 
@@ -449,28 +782,41 @@ const AdminDashboard = () => {
                                 <div className="mt-3 flex items-end gap-3">
 
                                     <h3 className="text-3xl font-bold text-white">
-                                        $24,780
+                                        {formatCurrency(
+                                            statsData.totalRevenue
+                                        )}
                                     </h3>
 
-                                    <span className="mb-1 flex items-center gap-1 text-[11px] font-bold text-emerald-400">
-                                        <TrendingUp size={12} />
-                                        18.4%
-                                    </span>
+                                    {latestRevenue >
+                                        0 && (
+                                        <span className="mb-1 flex items-center gap-1 text-[11px] font-bold text-emerald-400">
+                                            <TrendingUp
+                                                size={
+                                                    12
+                                                }
+                                            />
+                                            Live
+                                        </span>
+                                    )}
 
                                 </div>
 
                             </div>
 
                             <select className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-semibold text-slate-400 outline-none backdrop-blur-xl">
+
                                 <option className="bg-[#111322]">
                                     Last 7 days
                                 </option>
+
                                 <option className="bg-[#111322]">
                                     Last 30 days
                                 </option>
+
                                 <option className="bg-[#111322]">
                                     Last 3 months
                                 </option>
+
                             </select>
 
                         </div>
@@ -481,14 +827,16 @@ const AdminDashboard = () => {
 
                             <div className="absolute inset-0 flex flex-col justify-between">
 
-                                {[1, 2, 3, 4, 5].map((item) => (
-
-                                    <div
-                                        key={item}
-                                        className="border-t border-dashed border-white/[0.06]"
-                                    />
-
-                                ))}
+                                {[1, 2, 3, 4, 5].map(
+                                    (item) => (
+                                        <div
+                                            key={
+                                                item
+                                            }
+                                            className="border-t border-dashed border-white/[0.06]"
+                                        />
+                                    )
+                                )}
 
                             </div>
 
@@ -501,7 +849,7 @@ const AdminDashboard = () => {
                                 <defs>
 
                                     <linearGradient
-                                        id="revenueGradient"
+                                        id="revenueGradientDynamic"
                                         x1="0"
                                         x2="0"
                                         y1="0"
@@ -525,43 +873,95 @@ const AdminDashboard = () => {
                                 </defs>
 
                                 <path
-                                    d="M0 210 C70 190 80 170 140 180 C200 190 210 130 270 145 C330 160 350 110 410 125 C470 140 490 70 550 95 C610 120 630 80 690 65 C740 52 770 35 800 45 L800 250 L0 250 Z"
-                                    fill="url(#revenueGradient)"
+                                    d={
+                                        chartAreaPath
+                                    }
+                                    fill="url(#revenueGradientDynamic)"
                                 />
 
                                 <path
-                                    d="M0 210 C70 190 80 170 140 180 C200 190 210 130 270 145 C330 160 350 110 410 125 C470 140 490 70 550 95 C610 120 630 80 690 65 C740 52 770 35 800 45"
+                                    d={
+                                        chartLinePath
+                                    }
                                     fill="none"
                                     stroke="#8b5cf6"
                                     strokeWidth="3"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
                                 />
 
-                                <circle
-                                    cx="800"
-                                    cy="45"
-                                    r="5"
-                                    fill="#8b5cf6"
-                                />
+                                {chartPoints.map(
+                                    (
+                                        point,
+                                        index
+                                    ) => (
+                                        <g
+                                            key={
+                                                index
+                                            }
+                                        >
 
-                                <circle
-                                    cx="800"
-                                    cy="45"
-                                    r="10"
-                                    fill="#8b5cf6"
-                                    opacity="0.15"
-                                />
+                                            <circle
+                                                cx={
+                                                    point.x
+                                                }
+                                                cy={
+                                                    point.y
+                                                }
+                                                r="4"
+                                                fill="#8b5cf6"
+                                            />
+
+                                            <circle
+                                                cx={
+                                                    point.x
+                                                }
+                                                cy={
+                                                    point.y
+                                                }
+                                                r="9"
+                                                fill="#8b5cf6"
+                                                opacity="0.12"
+                                            />
+
+                                        </g>
+                                    )
+                                )}
 
                             </svg>
 
                             <div className="absolute bottom-[-25px] left-0 right-0 flex justify-between text-[9px] font-medium text-slate-600">
 
-                                <span>Oct 02</span>
-                                <span>Oct 03</span>
-                                <span>Oct 04</span>
-                                <span>Oct 05</span>
-                                <span>Oct 06</span>
-                                <span>Oct 07</span>
-                                <span>Oct 08</span>
+                                {revenueChart.length >
+                                0 ? (
+                                    revenueChart.map(
+                                        (
+                                            item,
+                                            index
+                                        ) => (
+                                            <span
+                                                key={
+                                                    index
+                                                }
+                                            >
+                                                {new Date(
+                                                    item._id
+                                                ).toLocaleDateString(
+                                                    "en-US",
+                                                    {
+                                                        month: "short",
+                                                        day: "2-digit",
+                                                    }
+                                                )}
+                                            </span>
+                                        )
+                                    )
+                                ) : (
+                                    <span>
+                                        No revenue
+                                        data
+                                    </span>
+                                )}
 
                             </div>
 
@@ -584,7 +984,11 @@ const AdminDashboard = () => {
                                 </p>
 
                                 <h3 className="mt-1 text-xl font-bold text-white">
-                                    1,248 Orders
+                                    {Number(
+                                        statsData.totalOrders ||
+                                            0
+                                    ).toLocaleString()}{" "}
+                                    Orders
                                 </h3>
 
                             </div>
@@ -597,12 +1001,30 @@ const AdminDashboard = () => {
 
                         <div className="mt-7 flex items-center justify-center">
 
-                            <div className="relative flex h-44 w-44 items-center justify-center rounded-full bg-[conic-gradient(#8b5cf6_0deg_216deg,#a78bfa_216deg_290deg,rgba(255,255,255,0.07)_290deg_360deg)] shadow-[0_0_50px_rgba(139,92,246,0.15)]">
+                            <div
+                                className="relative flex h-44 w-44 items-center justify-center rounded-full shadow-[0_0_50px_rgba(139,92,246,0.15)]"
+                                style={{
+                                    background: `conic-gradient(
+                                        #8b5cf6 0deg ${
+                                            completedPercentage *
+                                            3.6
+                                        }deg,
+                                        #a78bfa ${
+                                            completedPercentage *
+                                            3.6
+                                        }deg 290deg,
+                                        rgba(255,255,255,0.07) 290deg 360deg
+                                    )`,
+                                }}
+                            >
 
                                 <div className="flex h-32 w-32 flex-col items-center justify-center rounded-full border border-white/[0.08] bg-[#0b0d1b]">
 
                                     <span className="text-2xl font-bold text-white">
-                                        78%
+                                        {
+                                            completedPercentage
+                                        }
+                                        %
                                     </span>
 
                                     <span className="text-[10px] text-slate-600">
@@ -618,35 +1040,89 @@ const AdminDashboard = () => {
                         <div className="mt-7 space-y-3">
 
                             {[
-                                ["Delivered", "742", "bg-violet-500"],
-                                ["Processing", "316", "bg-violet-300"],
-                                ["Other", "190", "bg-slate-600"],
-                            ].map(([label, value, color]) => (
+                                [
+                                    "Delivered",
+                                    deliveredOrders,
+                                    "bg-violet-500",
+                                ],
+                                [
+                                    "Processing",
+                                    processingOrders,
+                                    "bg-violet-300",
+                                ],
+                                [
+                                    "Shipped",
+                                    shippedOrders,
+                                    "bg-indigo-400",
+                                ],
+                                [
+                                    "Pending",
+                                    pendingOrders,
+                                    "bg-amber-400",
+                                ],
+                                [
+                                    "Cancelled",
+                                    cancelledOrders,
+                                    "bg-red-400",
+                                ],
+                            ].map(
+                                ([
+                                    label,
+                                    value,
+                                    color,
+                                ]) => (
+                                    <div
+                                        key={
+                                            label
+                                        }
+                                        className="flex items-center justify-between"
+                                    >
 
-                                <div
-                                    key={label}
-                                    className="flex items-center justify-between"
-                                >
+                                        <div className="flex items-center gap-2">
+
+                                            <span
+                                                className={`h-2 w-2 rounded-full ${color}`}
+                                            />
+
+                                            <span className="text-[11px] text-slate-500">
+                                                {
+                                                    label
+                                                }
+                                            </span>
+
+                                        </div>
+
+                                        <span className="text-[11px] font-bold text-slate-300">
+                                            {
+                                                value
+                                            }
+                                        </span>
+
+                                    </div>
+                                )
+                            )}
+
+                            {otherOrders > 0 && (
+                                <div className="flex items-center justify-between">
 
                                     <div className="flex items-center gap-2">
 
-                                        <span
-                                            className={`h-2 w-2 rounded-full ${color}`}
-                                        />
+                                        <span className="h-2 w-2 rounded-full bg-slate-600" />
 
                                         <span className="text-[11px] text-slate-500">
-                                            {label}
+                                            Other
                                         </span>
 
                                     </div>
 
                                     <span className="text-[11px] font-bold text-slate-300">
-                                        {value}
+                                        {
+                                            otherOrders
+                                        }
                                     </span>
 
                                 </div>
-
-                            ))}
+                            )}
 
                         </div>
 
@@ -681,7 +1157,8 @@ const AdminDashboard = () => {
                                 </div>
 
                                 <p className="mt-1 text-[10px] text-slate-600">
-                                    Latest customer transactions
+                                    Latest customer
+                                    transactions
                                 </p>
 
                             </div>
@@ -707,16 +1184,22 @@ const AdminDashboard = () => {
                                             "Product",
                                             "Amount",
                                             "Status",
-                                        ].map((heading) => (
-
-                                            <th
-                                                key={heading}
-                                                className="px-5 py-3 text-left text-[9px] font-bold uppercase tracking-wider text-slate-600"
-                                            >
-                                                {heading}
-                                            </th>
-
-                                        ))}
+                                        ].map(
+                                            (
+                                                heading
+                                            ) => (
+                                                <th
+                                                    key={
+                                                        heading
+                                                    }
+                                                    className="px-5 py-3 text-left text-[9px] font-bold uppercase tracking-wider text-slate-600"
+                                                >
+                                                    {
+                                                        heading
+                                                    }
+                                                </th>
+                                            )
+                                        )}
 
                                     </tr>
 
@@ -724,83 +1207,184 @@ const AdminDashboard = () => {
 
                                 <tbody>
 
-                                    {recentOrders.map((order) => (
+                                    {recentOrders.length >
+                                    0 ? (
+                                        recentOrders.map(
+                                            (
+                                                order
+                                            ) => {
 
-                                        <tr
-                                            key={order.id}
-                                            className="border-b border-white/[0.05] transition last:border-0 hover:bg-white/[0.025]"
-                                        >
+                                                const customerName =
+                                                    order.user
+                                                        ? `${order.user.firstName || ""} ${
+                                                              order.user.lastName ||
+                                                              ""
+                                                          }`.trim()
+                                                        : order
+                                                              .shippingAddress
+                                                              ?.fullName ||
+                                                          "Guest Customer";
 
-                                            <td className="px-5 py-4">
+                                                const initials =
+                                                    customerName
+                                                        .split(
+                                                            " "
+                                                        )
+                                                        .filter(
+                                                            Boolean
+                                                        )
+                                                        .map(
+                                                            (
+                                                                name
+                                                            ) =>
+                                                                name[0]
+                                                        )
+                                                        .join(
+                                                            ""
+                                                        )
+                                                        .slice(
+                                                            0,
+                                                            2
+                                                        )
+                                                        .toUpperCase();
 
-                                                <p className="text-[11px] font-bold text-slate-300">
-                                                    {order.id}
+                                                const productName =
+                                                    order
+                                                        .items?.[0]
+                                                        ?.product
+                                                        ?.name ||
+                                                    "Multiple Products";
+
+                                                return (
+                                                    <tr
+                                                        key={
+                                                            order._id
+                                                        }
+                                                        className="border-b border-white/[0.05] transition last:border-0 hover:bg-white/[0.025]"
+                                                    >
+
+                                                        <td className="px-5 py-4">
+
+                                                            <p className="text-[11px] font-bold text-slate-300">
+                                                                #
+                                                                {order.trackingNumber ||
+                                                                    order._id?.slice(
+                                                                        -6
+                                                                    )}
+                                                            </p>
+
+                                                            <p className="mt-1 text-[9px] text-slate-600">
+                                                                {order.createdAt
+                                                                    ? new Date(
+                                                                          order.createdAt
+                                                                      ).toLocaleDateString(
+                                                                          "en-US",
+                                                                          {
+                                                                              month: "short",
+                                                                              day: "2-digit",
+                                                                              year: "numeric",
+                                                                          }
+                                                                      )
+                                                                    : "-"}
+                                                            </p>
+
+                                                        </td>
+
+                                                        <td className="px-5 py-4">
+
+                                                            <div className="flex items-center gap-2">
+
+                                                                <div className="flex h-8 w-8 items-center justify-center rounded-full border border-violet-400/10 bg-violet-500/10 text-[9px] font-bold text-violet-300">
+                                                                    {initials ||
+                                                                        "GU"}
+                                                                </div>
+
+                                                                <span className="text-[11px] font-semibold text-slate-300">
+                                                                    {
+                                                                        customerName
+                                                                    }
+                                                                </span>
+
+                                                            </div>
+
+                                                        </td>
+
+                                                        <td className="px-5 py-4">
+
+                                                            <span className="text-[11px] text-slate-500">
+                                                                {
+                                                                    productName
+                                                                }
+                                                            </span>
+
+                                                            {order
+                                                                .items
+                                                                ?.length >
+                                                                1 && (
+                                                                <span className="ml-2 text-[9px] text-violet-400">
+                                                                    +
+                                                                    {order
+                                                                        .items
+                                                                        .length -
+                                                                        1}{" "}
+                                                                    more
+                                                                </span>
+                                                            )}
+
+                                                        </td>
+
+                                                        <td className="px-5 py-4">
+
+                                                            <span className="text-[11px] font-bold text-slate-300">
+                                                                {formatCurrency(
+                                                                    order.total
+                                                                )}
+                                                            </span>
+
+                                                        </td>
+
+                                                        <td className="px-5 py-4">
+
+                                                            <span
+                                                                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-bold ${getStatusStyle(
+                                                                    order.status
+                                                                )}`}
+                                                            >
+                                                                {getStatusIcon(
+                                                                    order.status
+                                                                )}
+
+                                                                {
+                                                                    order.status
+                                                                }
+                                                            </span>
+
+                                                        </td>
+
+                                                    </tr>
+                                                );
+                                            }
+                                        )
+                                    ) : (
+                                        <tr>
+                                            <td
+                                                colSpan="5"
+                                                className="px-5 py-12 text-center"
+                                            >
+                                                <ShoppingBag
+                                                    size={
+                                                        25
+                                                    }
+                                                    className="mx-auto text-slate-700"
+                                                />
+
+                                                <p className="mt-3 text-xs text-slate-500">
+                                                    No orders
+                                                    found
                                                 </p>
-
-                                                <p className="mt-1 text-[9px] text-slate-600">
-                                                    {order.date}
-                                                </p>
-
                                             </td>
-
-                                            <td className="px-5 py-4">
-
-                                                <div className="flex items-center gap-2">
-
-                                                    <div className="flex h-8 w-8 items-center justify-center rounded-full border border-violet-400/10 bg-violet-500/10 text-[9px] font-bold text-violet-300">
-
-                                                        {order.customer
-                                                            .split(" ")
-                                                            .map((n) => n[0])
-                                                            .join("")}
-
-                                                    </div>
-
-                                                    <span className="text-[11px] font-semibold text-slate-300">
-                                                        {order.customer}
-                                                    </span>
-
-                                                </div>
-
-                                            </td>
-
-                                            <td className="px-5 py-4">
-
-                                                <span className="text-[11px] text-slate-500">
-                                                    {order.product}
-                                                </span>
-
-                                            </td>
-
-                                            <td className="px-5 py-4">
-
-                                                <span className="text-[11px] font-bold text-slate-300">
-                                                    {order.amount}
-                                                </span>
-
-                                            </td>
-
-                                            <td className="px-5 py-4">
-
-                                                <span
-                                                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-bold ${getStatusStyle(
-                                                        order.status
-                                                    )}`}
-                                                >
-
-                                                    {getStatusIcon(
-                                                        order.status
-                                                    )}
-
-                                                    {order.status}
-
-                                                </span>
-
-                                            </td>
-
                                         </tr>
-
-                                    ))}
+                                    )}
 
                                 </tbody>
 
@@ -836,51 +1420,91 @@ const AdminDashboard = () => {
 
                         <div className="p-3">
 
-                            {topProducts.map((product, index) => (
+                            {topProducts.length >
+                            0 ? (
+                                topProducts.map(
+                                    (
+                                        product,
+                                        index
+                                    ) => (
+                                        <div
+                                            key={
+                                                product._id ||
+                                                index
+                                            }
+                                            className="group flex items-center gap-3 rounded-xl p-3 transition hover:bg-white/[0.035]"
+                                        >
 
-                                <div
-                                    key={product.name}
-                                    className="group flex items-center gap-3 rounded-xl p-3 transition hover:bg-white/[0.035]"
-                                >
+                                            <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/5">
 
-                                    <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/5">
+                                                <img
+                                                    src={
+                                                        product.image ||
+                                                        product.productImage ||
+                                                        "https://placehold.co/100x100/111322/ffffff?text=Product"
+                                                    }
+                                                    alt={
+                                                        product.name ||
+                                                        "Product"
+                                                    }
+                                                    className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
+                                                />
 
-                                        <img
-                                            src={product.image}
-                                            alt={product.name}
-                                            className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
-                                        />
+                                            </div>
 
-                                    </div>
+                                            <div className="min-w-0 flex-1">
 
-                                    <div className="min-w-0 flex-1">
+                                                <p className="truncate text-[11px] font-bold text-slate-300">
+                                                    {product.name ||
+                                                        "Unknown Product"}
+                                                </p>
 
-                                        <p className="truncate text-[11px] font-bold text-slate-300">
-                                            {product.name}
-                                        </p>
+                                                <p className="mt-1 text-[9px] text-slate-600">
+                                                    {product.category ||
+                                                        "General"}{" "}
+                                                    •{" "}
+                                                    {
+                                                        product.sold
+                                                    }{" "}
+                                                    sold
+                                                </p>
 
-                                        <p className="mt-1 text-[9px] text-slate-600">
-                                            {product.category} •{" "}
-                                            {product.sold} sold
-                                        </p>
+                                            </div>
 
-                                    </div>
+                                            <div className="text-right">
 
-                                    <div className="text-right">
+                                                <p className="text-[11px] font-bold text-slate-300">
+                                                    {formatCurrency(
+                                                        product.revenue
+                                                    )}
+                                                </p>
 
-                                        <p className="text-[11px] font-bold text-slate-300">
-                                            {product.revenue}
-                                        </p>
+                                                <p className="mt-1 text-[9px] font-bold text-violet-400">
+                                                    #
+                                                    {index +
+                                                        1}
+                                                </p>
 
-                                        <p className="mt-1 text-[9px] font-bold text-violet-400">
-                                            #{index + 1}
-                                        </p>
+                                            </div>
 
-                                    </div>
+                                        </div>
+                                    )
+                                )
+                            ) : (
+                                <div className="px-3 py-10 text-center">
+
+                                    <Package
+                                        size={25}
+                                        className="mx-auto text-slate-700"
+                                    />
+
+                                    <p className="mt-3 text-xs text-slate-500">
+                                        No product
+                                        sales yet
+                                    </p>
 
                                 </div>
-
-                            ))}
+                            )}
 
                         </div>
 
@@ -917,7 +1541,7 @@ const AdminDashboard = () => {
                             <div className="flex items-center justify-between">
 
                                 <p className="text-xs font-medium text-violet-200">
-                                    Conversion Rate
+                                    Store Performance
                                 </p>
 
                                 <TrendingUp
@@ -928,16 +1552,24 @@ const AdminDashboard = () => {
                             </div>
 
                             <h3 className="mt-3 text-3xl font-bold text-white">
-                                8.64%
+                                {completedPercentage}%
                             </h3>
 
                             <p className="mt-2 text-[10px] text-violet-200/60">
-                                +1.2% compared to last month
+                                Order completion rate
                             </p>
 
                             <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/10">
 
-                                <div className="h-full w-[68%] rounded-full bg-gradient-to-r from-violet-400 to-indigo-400 shadow-lg shadow-violet-500/40" />
+                                <div
+                                    className="h-full rounded-full bg-gradient-to-r from-violet-400 to-indigo-400 shadow-lg shadow-violet-500/40 transition-all duration-700"
+                                    style={{
+                                        width: `${Math.min(
+                                            completedPercentage,
+                                            100
+                                        )}%`,
+                                    }}
+                                />
 
                             </div>
 
@@ -952,13 +1584,14 @@ const AdminDashboard = () => {
                         <div className="flex items-center justify-between">
 
                             <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-400/10 bg-amber-400/10 text-amber-300">
-
                                 <Package size={17} />
-
                             </div>
 
                             <span className="rounded-full border border-amber-400/10 bg-amber-400/10 px-2 py-1 text-[9px] font-bold text-amber-300">
-                                Attention
+                                {lowStockProducts.length >
+                                0
+                                    ? "Attention"
+                                    : "Healthy"}
                             </span>
 
                         </div>
@@ -968,7 +1601,9 @@ const AdminDashboard = () => {
                         </p>
 
                         <h3 className="mt-1 text-2xl font-bold text-white">
-                            24
+                            {
+                                lowStockProducts.length
+                            }
                         </h3>
 
                         <button className="mt-4 flex items-center gap-1 text-[10px] font-bold text-violet-400 transition hover:text-violet-300">
@@ -994,7 +1629,8 @@ const AdminDashboard = () => {
                                 </p>
 
                                 <p className="mt-1 text-[9px] text-slate-600">
-                                    Manage your store faster
+                                    Manage your store
+                                    faster
                                 </p>
 
                             </div>
@@ -1013,16 +1649,20 @@ const AdminDashboard = () => {
                                 "+ Add Category",
                                 "View Orders",
                                 "Users",
-                            ].map((action) => (
-
-                                <button
-                                    key={action}
-                                    className="rounded-xl border border-white/[0.07] bg-white/[0.025] px-3 py-2.5 text-left text-[10px] font-semibold text-slate-400 transition hover:border-violet-400/20 hover:bg-violet-500/10 hover:text-violet-300"
-                                >
-                                    {action}
-                                </button>
-
-                            ))}
+                            ].map(
+                                (action) => (
+                                    <button
+                                        key={
+                                            action
+                                        }
+                                        className="rounded-xl border border-white/[0.07] bg-white/[0.025] px-3 py-2.5 text-left text-[10px] font-semibold text-slate-400 transition hover:border-violet-400/20 hover:bg-violet-500/10 hover:text-violet-300"
+                                    >
+                                        {
+                                            action
+                                        }
+                                    </button>
+                                )
+                            )}
 
                         </div>
 
@@ -1030,12 +1670,15 @@ const AdminDashboard = () => {
 
                 </div>
 
-                {/* FOOTER */}
+                {/* =====================================================
+                    FOOTER
+                ====================================================== */}
 
                 <div className="mt-8 border-t border-white/[0.06] pt-5 text-center">
 
                     <p className="text-[9px] text-slate-700">
-                        © 2026 Admin Dashboard • E-Commerce Management System
+                        © 2026 Admin Dashboard •
+                        E-Commerce Management System
                     </p>
 
                 </div>
