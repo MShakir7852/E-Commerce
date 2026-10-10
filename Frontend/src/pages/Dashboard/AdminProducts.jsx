@@ -9,9 +9,9 @@ import { toast } from "sonner";
 const API_URL = "http://localhost:3000/api";
 const ENDPOINTS = {
   products: `${API_URL}/products/all`,
-  create: `${API_URL}/products`,
-  update: (id) => `${API_URL}/products/${id}`,
-  delete: (id) => `${API_URL}/products/${id}`,
+  create: `${API_URL}/products/create`,
+  update: (id) => `${API_URL}/products/update/${id}`,
+  delete: (id) => `${API_URL}/products/delete/${id}`,
   categories: `${API_URL}/categories/all`,
 };
 
