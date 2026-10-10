@@ -19,7 +19,7 @@ import NotFound from "./pages/NotFound";
 import TrackOrder from "./pages/TrackOrder";
 import OrderSuccess from './pages/OrderSuccess';
 import MyOrders from './pages/MyOrders';
-import AdminDashboard from './pages/AdminDashboard';
+import AdminDashboard from './pages/Dashboard/AdminDashboard';
 
 
 
