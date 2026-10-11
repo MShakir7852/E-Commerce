@@ -1021,7 +1021,7 @@ const AdminDashboard = () => {
 
                       <p className={`mt-1 text-xs ${mutedText}`}>Review inventory to avoid running out of stock.</p>
 
-                      <button onClick={() => goTo("/admin/products")} className="mt-2 text-xs font-semibold text-violet-500">Manage inventory <ArrowUpRight size={12} className="inline" /></button>
+                      <button onClick={() => setActivePage("products")} className="mt-2 text-xs font-semibold text-violet-500">Manage inventory <ArrowUpRight size={12} className="inline" /></button>
 
                     </div>
 
@@ -1179,7 +1179,7 @@ const AdminDashboard = () => {
 
                   <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${stat.iconClass}`}><Icon size={19} /></div>
 
-                  <button onClick={() => goTo(stat.title === "Total Revenue" ? "/admin/orders" : stat.title === "Total Orders" ? "/admin/orders" : stat.title === "Total Products" ? "/admin/products" : "/admin/users")} className={`rounded-lg p-1.5 transition hover:bg-violet-500/10 hover:text-violet-500 ${subtleText}`} aria-label={`View ${stat.title}`}><ArrowUpRight size={17} /></button>
+                  <button onClick={() => setActivePage(stat.title === "Total Revenue" ? "dashboard" : stat.title === "Total Orders" ? "orders" : stat.title === "Total Products" ? "products" : "users")} className={`rounded-lg p-1.5 transition hover:bg-violet-500/10 hover:text-violet-500 ${subtleText}`} aria-label={`View ${stat.title}`}><ArrowUpRight size={17} /></button>
 
                 </div>
 
@@ -1409,7 +1409,7 @@ const AdminDashboard = () => {
 
                 <button onClick={exportOrders} className={`inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition hover:border-violet-500/30 hover:text-violet-500 ${isDark ? "border-white/10 text-slate-300" : "border-slate-200 text-slate-600"}`}><Download size={13} /> Export CSV</button>
 
-                <button onClick={() => goTo("/admin/orders")} className="inline-flex h-9 items-center gap-1 rounded-lg px-2 text-xs font-bold text-violet-500 hover:bg-violet-500/10">View all <ArrowUpRight size={13} /></button>
+                <button onClick={() => setActivePage("orders")} className="inline-flex h-9 items-center gap-1 rounded-lg px-2 text-xs font-bold text-violet-500 hover:bg-violet-500/10">View all <ArrowUpRight size={13} /></button>
 
               </div>
 
@@ -1523,7 +1523,7 @@ const AdminDashboard = () => {
 
             <div className={`border-t p-4 ${isDark ? "border-white/[0.07]" : "border-slate-100"}`}>
 
-              <button onClick={() => goTo("/admin/products")} className={`flex w-full items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-bold transition hover:border-violet-500/30 hover:bg-violet-500/10 hover:text-violet-500 ${isDark ? "border-white/10 text-slate-300" : "border-slate-200 text-slate-600"}`}>View all products <ExternalLink size={13} /></button>
+              <button onClick={() => setActivePage("products")} className={`flex w-full items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-bold transition hover:border-violet-500/30 hover:bg-violet-500/10 hover:text-violet-500 ${isDark ? "border-white/10 text-slate-300" : "border-slate-200 text-slate-600"}`}>View all products <ExternalLink size={13} /></button>
 
             </div>
 
@@ -1559,7 +1559,7 @@ const AdminDashboard = () => {
 
             <h3 className={`mt-1 text-3xl font-bold ${headingText}`}>{compactNumber(lowStockProducts.length)}</h3>
 
-            <button onClick={() => goTo("/admin/products")} className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-violet-500 hover:underline">Manage inventory <ChevronRight size={13} /></button>
+            <button onClick={() =>setActivePage("products")} className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-violet-500 hover:underline">Manage inventory <ChevronRight size={13} /></button>
 
             {lowStockProducts.length > 0 && <div className="mt-4 space-y-2">{lowStockProducts.slice(0, 2).map((product, index) => <div key={product._id || index} className={`flex items-center justify-between gap-2 text-xs ${mutedText}`}><span className="truncate">{product.name || "Unnamed product"}</span><span className="shrink-0 font-semibold text-amber-600 dark:text-amber-300">{product.stock ?? product.quantity ?? "Low"}</span></div>)}</div>}
 
@@ -1575,17 +1575,17 @@ const AdminDashboard = () => {
 
               {[
 
-                ["Add product", "/admin/products/create", Package],
+                ["Add product", "products", Package],
 
-                ["Add category", "/admin/categories/create", LayoutDashboard],
+                ["Add category", "categories", LayoutDashboard],
 
-                ["View orders", "/admin/orders", ShoppingBag],
+                ["View orders", "orders", ShoppingBag],
 
-                ["Manage users", "/admin/users", Users],
+                ["Manage users", "users", Users],
 
               ].map(([label, path, Icon]) => (
 
-                <button key={label} onClick={() => goTo(path)} className={`flex min-h-12 items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-xs font-semibold transition hover:border-violet-500/30 hover:bg-violet-500/10 hover:text-violet-500 ${isDark ? "border-white/[0.08] bg-white/[0.02] text-slate-300" : "border-slate-200 bg-slate-50 text-slate-600"}`}><Icon size={14} />{label}</button>
+                <button key={label} onClick={() => setActivePage(path)} className={`flex min-h-12 items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-xs font-semibold transition hover:border-violet-500/30 hover:bg-violet-500/10 hover:text-violet-500 ${isDark ? "border-white/[0.08] bg-white/[0.02] text-slate-300" : "border-slate-200 bg-slate-50 text-slate-600"}`}><Icon size={14} />{label}</button>
 
               ))}
 

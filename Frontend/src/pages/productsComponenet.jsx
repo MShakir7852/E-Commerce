@@ -1,6 +1,6 @@
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+// import { Link } from "react-router-dom";
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../redux/slices/cartSlice";
@@ -17,8 +17,10 @@ import {
     Sparkles,
     Package,
 } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
 
 function ProductsComponenet() {
+    const [searchParams, setSearchParams] = useSearchParams();
     const dispatch = useDispatch();
 
     const [products, setProducts] = useState([]);
@@ -34,7 +36,7 @@ function ProductsComponenet() {
 
     const [search, setSearch] = useState("");
     const [categoryFilter, setCategoryFilter] =
-        useState("all");
+        useState("all" || searchParams.get("category"));
     const [priceFilter, setPriceFilter] =
         useState("all");
     const [stockFilter, setStockFilter] =
@@ -173,9 +175,9 @@ function ProductsComponenet() {
             const matchesCategory =
                 categoryFilter === "all" ||
                 productCategoryId ===
-                    categoryFilter ||
+                categoryFilter ||
                 productCategoryName ===
-                    categoryFilter;
+                categoryFilter;
 
             // PRICE
             const price =
@@ -500,12 +502,17 @@ function ProductsComponenet() {
                                     value={
                                         categoryFilter
                                     }
-                                    onChange={(e) =>
-                                        setCategoryFilter(
-                                            e.target
-                                                .value
-                                        )
-                                    }
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+
+                                        setCategoryFilter(value);
+
+                                        if (value === "all") {
+                                            setSearchParams({});
+                                        } else {
+                                            setSearchParams({ category: value });
+                                        }
+                                    }}
                                     disabled={
                                         categoryLoading
                                     }
@@ -730,24 +737,24 @@ function ProductsComponenet() {
 
                                 const discount =
                                     price > 0 &&
-                                    discountPrice > 0 &&
-                                    discountPrice <
+                                        discountPrice > 0 &&
+                                        discountPrice <
                                         price
                                         ? Math.round(
-                                              ((price -
-                                                  discountPrice) /
-                                                  price) *
-                                                  100
-                                          )
+                                            ((price -
+                                                discountPrice) /
+                                                price) *
+                                            100
+                                        )
                                         : 0;
 
                                 const productCategory =
                                     product.category &&
-                                    typeof product.category ===
+                                        typeof product.category ===
                                         "object"
                                         ? product
-                                              .category
-                                              .name
+                                            .category
+                                            .name
                                         : product.category;
 
                                 const stock =
@@ -791,25 +798,25 @@ function ProductsComponenet() {
 
                                                 {discount >
                                                     0 && (
-                                                    <div className="absolute top-4 left-4">
+                                                        <div className="absolute top-4 left-4">
 
-                                                        <span className="inline-flex items-center gap-1.5 bg-red-500 text-white text-xs font-black px-3.5 py-2 rounded-full shadow-lg">
+                                                            <span className="inline-flex items-center gap-1.5 bg-red-500 text-white text-xs font-black px-3.5 py-2 rounded-full shadow-lg">
 
-                                                            <Sparkles
-                                                                size={
-                                                                    12
+                                                                <Sparkles
+                                                                    size={
+                                                                        12
+                                                                    }
+                                                                />
+
+                                                                {
+                                                                    discount
                                                                 }
-                                                            />
+                                                                % OFF
 
-                                                            {
-                                                                discount
-                                                            }
-                                                            % OFF
+                                                            </span>
 
-                                                        </span>
-
-                                                    </div>
-                                                )}
+                                                        </div>
+                                                    )}
 
 
                                                 {/* WISHLIST */}
@@ -873,13 +880,13 @@ function ProductsComponenet() {
 
                                                     {stock >
                                                         0 && (
-                                                        <span className="text-[10px] text-gray-400 font-semibold shrink-0">
-                                                            {
-                                                                stock
-                                                            }{" "}
-                                                            left
-                                                        </span>
-                                                    )}
+                                                            <span className="text-[10px] text-gray-400 font-semibold shrink-0">
+                                                                {
+                                                                    stock
+                                                                }{" "}
+                                                                left
+                                                            </span>
+                                                        )}
 
                                                 </div>
 
@@ -956,7 +963,7 @@ function ProductsComponenet() {
                                                 <div className="mt-4">
 
                                                     {stock >
-                                                    0 ? (
+                                                        0 ? (
                                                         <span className="inline-flex items-center gap-2 bg-green-50 text-green-600 border border-green-100 px-3 py-1.5 rounded-full text-xs font-bold">
 
                                                             <span className="relative flex w-2 h-2">
@@ -1002,28 +1009,28 @@ function ProductsComponenet() {
 
                                                             {discount >
                                                                 0 && (
-                                                                <span className="text-sm text-gray-400 line-through">
+                                                                    <span className="text-sm text-gray-400 line-through">
 
-                                                                    $
-                                                                    {price.toFixed(
-                                                                        2
-                                                                    )}
+                                                                        $
+                                                                        {price.toFixed(
+                                                                            2
+                                                                        )}
 
-                                                                </span>
-                                                            )}
+                                                                    </span>
+                                                                )}
 
                                                         </div>
 
                                                         {discount >
                                                             0 && (
-                                                            <p className="text-xs font-bold text-green-600 mt-1">
+                                                                <p className="text-xs font-bold text-green-600 mt-1">
 
-                                                                Save{" "}
-                                                                {discount}
-                                                                %
+                                                                    Save{" "}
+                                                                    {discount}
+                                                                    %
 
-                                                            </p>
-                                                        )}
+                                                                </p>
+                                                            )}
 
                                                     </div>
 
@@ -1046,16 +1053,15 @@ function ProductsComponenet() {
                                                         stock <=
                                                         0
                                                     }
-                                                    className={`group/cart relative overflow-hidden w-full mt-5 py-3.5 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 ${
-                                                        stock >
+                                                    className={`group/cart relative overflow-hidden w-full mt-5 py-3.5 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 ${stock >
                                                         0
-                                                            ? "bg-gray-900 text-white hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-500/20 hover:-translate-y-0.5"
-                                                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                                    }`}
+                                                        ? "bg-gray-900 text-white hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-500/20 hover:-translate-y-0.5"
+                                                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                                        }`}
                                                 >
 
                                                     {stock >
-                                                    0 ? (
+                                                        0 ? (
                                                         <>
                                                             <ShoppingCart
                                                                 size={

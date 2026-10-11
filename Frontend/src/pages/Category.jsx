@@ -225,7 +225,7 @@ const Category = () => {
                         {categories.slice(0, 4).map((category) => (
 
                             <Link
-                                to={`/category/${category._id}`}
+                                to={`/products?category=${category._id}`}
                                 key={category._id}
                                 className="group relative overflow-hidden rounded-3xl border border-white/30 bg-white/10 shadow-xl backdrop-blur-md transition-all duration-500 hover:-translate-y-2 hover:bg-white/20 hover:shadow-2xl"
                             >
