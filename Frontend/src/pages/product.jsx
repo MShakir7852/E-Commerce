@@ -30,7 +30,7 @@ function Product() {
             setProduct(fetchedProduct);
             setSelectedImage(fetchedProduct.productImage);
         } catch (error) {
-            console.error("Error fetching product:", error);
+            // console.error("Error fetching product:", error);
 
             toast.error("Unable to load product");
         }

@@ -18,7 +18,7 @@ import Footer from './components/Footer';
 import Verifyotp from './pages/verifyotp';
 import EmailForForgetPassword from './pages/EmailForForgetPassword';
 import NewPassword from './pages/newPassword';
-import ProductComponenet from './pages/productsComponenet';
+import ProductComponenet from './pages/ProductsComponenet';
 import Product from './pages/product';
 import AddToCart from './pages/AddToCart';
 import Checkout from "./pages/Checkout";
