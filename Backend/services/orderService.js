@@ -1,3 +1,4 @@
+
 const Order = require("../models/orderModel");
 
 const sendOrderConfirmationEmail = require("../utills/emailService.js");
@@ -20,41 +21,67 @@ const createOrder = async (orderData) => {
 
 // Get logged-in user's orders
 const getUserOrders = async (userId) => {
-    const orders = await Order.find({
-        user: userId,
-    })
+    return await Order.find({ user: userId })
         .populate("items.product")
         .sort({ createdAt: -1 });
-
-    return orders;
 };
 
 // Get all orders (Admin)
 const getAllOrders = async () => {
-    const orders = await Order.find()
+    return await Order.find()
         .populate("items.product")
         .populate("user", "firstName lastName email")
         .sort({ createdAt: -1 });
-
-    return orders;
 };
 
 // Get single order by ID for a specific user
 const getOrderById = async (orderId, userId) => {
-    const order = await Order.findOne({
+    return await Order.findOne({
         _id: orderId,
         user: userId,
     }).populate("items.product");
-
-    return order;
 };
 
 // Get order by tracking number
 const getOrderByTrackingNumber = async (trackingNumber, userId) => {
-    const order = await Order.findOne({
+    return await Order.findOne({
         trackingNumber: trackingNumber.toUpperCase(),
         user: userId,
-    });
+    }).populate("items.product");
+};
+
+// Update order (Admin)
+const updateOrder = async (orderId, updateData) => {
+    const allowedStatuses = [
+        "Pending",
+        "Confirmed",
+        "Processing",
+        "Shipped",
+        "Delivered",
+        "Cancelled",
+    ];
+
+    if (
+        updateData.status &&
+        !allowedStatuses.includes(updateData.status)
+    ) {
+        throw new Error("Invalid order status");
+    }
+
+    const order = await Order.findByIdAndUpdate(
+        orderId,
+        { $set: updateData },
+        {
+            new: true,
+            runValidators: true,
+        }
+    )
+        .populate("items.product")
+        .populate("user", "firstName lastName email");
+
+    if (!order) {
+        throw new Error("Order not found");
+    }
 
     return order;
 };
@@ -65,4 +92,5 @@ module.exports = {
     getAllOrders,
     getOrderById,
     getOrderByTrackingNumber,
+    updateOrder,
 };

@@ -1,3 +1,4 @@
+
 const orderService = require("../services/orderService");
 
 const createOrder = async (req, res) => {
@@ -147,10 +148,54 @@ const getOrderByTrackingNumber = async (req, res) => {
     }
 };
 
+// Update order (Admin)
+const updateOrder = async (req, res) => {
+    try {
+        const { status } = req.body;
+
+        const allowedStatuses = [
+            "Pending",
+            "Confirmed",
+            "Processing",
+            "Shipped",
+            "Delivered",
+        ];
+
+        if (!status || !allowedStatuses.includes(status)) {
+            return res.status(400).json({
+                statusText: "error",
+                message: "Invalid order status",
+            });
+        }
+
+        const order = await orderService.updateOrder(
+            req.params.id,
+            { status }
+        );
+
+        return res.status(200).json({
+            statusText: "success",
+            message: "Order status updated successfully",
+            order,
+        });
+    } catch (error) {
+        console.error("UPDATE ORDER ERROR:", error);
+
+        const statusCode =
+            error.message === "Order not found" ? 404 : 500;
+
+        return res.status(statusCode).json({
+            statusText: "error",
+            message: error.message || "Failed to update order",
+        });
+    }
+};
+
 module.exports = {
     createOrder,
     getUserOrders,
     getAllOrders,
     getOrderById,
     getOrderByTrackingNumber,
+    updateOrder,
 };

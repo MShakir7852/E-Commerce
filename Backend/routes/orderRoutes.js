@@ -7,13 +7,14 @@ const {
     getAllOrders,
     getOrderById,
     getOrderByTrackingNumber,
+    updateOrder,
 } = require("../controllers/orderController");
 
 const { isAuthenticated,isAdmin } = require("../midllware/isAuthenticated");
 
 // Create new order
 router.post("/create", isAuthenticated, createOrder);
-
+router.put("/update/:id", isAuthenticated, isAdmin, updateOrder);
 // Get all orders (Admin) — must be before /:id
 router.get("/all", isAuthenticated, isAdmin, getAllOrders);
 
