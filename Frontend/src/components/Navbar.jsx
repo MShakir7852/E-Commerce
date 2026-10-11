@@ -222,7 +222,7 @@ function Navbar() {
 
                             {isLogin && user?.role === "admin" && (
                                 <Link
-                                    to="/dashboard"
+                                    to="/Dashboard"
                                     className="
                                         flex
                                         items-center
@@ -762,7 +762,7 @@ function Navbar() {
                                 {isLogin &&
                                     user?.role === "admin" && (
                                         <Link
-                                            to="/dashboard"
+                                            to="/Dashboard"
                                             onClick={() =>
                                                 setMobileMenu(false)
                                             }

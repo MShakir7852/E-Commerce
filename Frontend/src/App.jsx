@@ -44,14 +44,20 @@ function App() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="*" element={<NotFound />} />
           <Route
-            path="/track-order"
+            path="/track-order/"
             element={<TrackOrder />}
           />
-          <Route path='/order-success' element={<OrderSuccess/>}/>
-          <Route path='/My-Orders' element={<MyOrders/>}/>
-          <Route path='/Dashboard' element={<AdminDashboard/>}/>
+          <Route path='/order-success' element={<OrderSuccess />} />
+          <Route path='/My-Orders' element={<MyOrders />} />
+          <Route path='/Dashboard' element={<AdminDashboard />} />
         </Routes>
         <Footer />
+      </BrowserRouter>
+      <BrowserRouter>
+
+        <Routes>
+          <Route path='/Dashboard' element={<AdminDashboard />} />
+        </Routes>
       </BrowserRouter>
     </>
   )

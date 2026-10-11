@@ -19,6 +19,7 @@ import {
     AlertCircle,
     Sparkles,
 } from "lucide-react";
+import { useParams } from "react-router-dom";
 
 const STATUS_STEPS = [
     {
@@ -54,6 +55,7 @@ const STATUS_STEPS = [
 ];
 
 const TrackOrder = () => {
+    // const Tracking_number=useParams()
     const [trackingNumber, setTrackingNumber] = useState("");
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(false);
