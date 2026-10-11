@@ -79,9 +79,11 @@ import {
 
 } from "lucide-react";
 
+import  API  from "../../config/api";
 
 
-const API_URL = "http://localhost:3000/api/admin/dashboard";
+
+const API_URL = `${API}/api/admin/dashboard`;
 
 
 

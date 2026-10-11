@@ -2,7 +2,9 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { Users, Search, RefreshCw, ShieldCheck, UserRound, Mail, X } from "lucide-react";
 import { toast } from "sonner";
-const API = "http://localhost:3000/api";
+
+import  API_URL  from "../../config/api";
+const API = `${API_URL}/api`;
 const getArray = (r, key) => [r?.data?.data?.[key], r?.data?.[key], r?.data?.data, r?.data].find(Array.isArray) || [];
 const errMsg = e => e.response?.data?.message || e.response?.data?.error || e.message || "Request failed";
 const AdminUser = ({ theme = "dark" }) => {

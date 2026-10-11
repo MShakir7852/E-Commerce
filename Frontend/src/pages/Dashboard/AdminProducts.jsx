@@ -6,7 +6,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-const API_URL = "http://localhost:3000/api";
+import  API  from "../../config/api";
+const API_URL = `${API}/api`;
 const ENDPOINTS = {
   products: `${API_URL}/products/all`,
   create: `${API_URL}/products/create`,

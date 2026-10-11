@@ -2,8 +2,9 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { FolderOpen, Plus, Search, RefreshCw, Pencil, Trash2, X, ImagePlus, Tags, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import  API_URL  from "../../config/api";
 
-const API = "http://localhost:3000/api";
+const API = API_URL;
 const getArray = (r, key) => [r?.data?.data?.[key], r?.data?.[key], r?.data?.data, r?.data].find(Array.isArray) || [];
 const messageOf = (e) => e.response?.data?.message || e.response?.data?.error || e.message || "Request failed";
 const AdminCategories = ({ theme = "dark" }) => {
@@ -13,12 +14,12 @@ const AdminCategories = ({ theme = "dark" }) => {
   const blank = { name: "", description: "", isActive: true };
   const [form, setForm] = useState(blank);
   const config = useCallback((multipart = false) => { const token = localStorage.getItem("accessToken"); return { withCredentials: true, headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(multipart ? { "Content-Type": "multipart/form-data" } : {}) } }; }, []);
-  const load = useCallback(async () => { setLoading(true); try { const r = await axios.get(`${API}/categories/all`, config()); setCategories(getArray(r, "categories")); } catch (e) { toast.error(messageOf(e)); } finally { setLoading(false); } }, [config]);
+  const load = useCallback(async () => { setLoading(true); try { const r = await axios.get(`${API}/api/categories/all`, config()); setCategories(getArray(r, "categories")); } catch (e) { toast.error(messageOf(e)); } finally { setLoading(false); } }, [config]);
   useEffect(() => { load(); }, [load]);
   const filtered = useMemo(() => categories.filter(c => `${c.name || ""} ${c.description || ""}`.toLowerCase().includes(search.toLowerCase())), [categories, search]);
   const open = (category = null) => { setEditing(category); setForm(category ? { name: category.name || "", description: category.description || "", isActive: category.isActive !== false } : blank); setFile(null); setModal(true); };
-  const save = async (e) => { e.preventDefault(); if (!form.name.trim()) return toast.error("Category name is required"); setBusy(true); try { const data = new FormData(); data.append("name", form.name.trim()); data.append("description", form.description); data.append("isActive", String(form.isActive)); if (file) data.append("CategoryImage", file); const id = editing?._id || editing?.id; if (editing) await axios.put(`${API}/categories/${id}`, data, config(true)); else await axios.post(`${API}/categories`, data, config(true)); toast.success(editing ? "Category updated" : "Category created"); setModal(false); await load(); } catch (e) { toast.error(messageOf(e)); } finally { setBusy(false); } };
-  const deleteCategory = async () => { if (!remove) return; setBusy(true); try { await axios.delete(`${API}/categories/${remove._id || remove.id}`, config()); toast.success("Category deleted"); setRemove(null); await load(); } catch (e) { toast.error(messageOf(e)); } finally { setBusy(false); } };
+  const save = async (e) => { e.preventDefault(); if (!form.name.trim()) return toast.error("Category name is required"); setBusy(true); try { const data = new FormData(); data.append("name", form.name.trim()); data.append("description", form.description); data.append("isActive", String(form.isActive)); if (file) data.append("CategoryImage", file); const id = editing?._id || editing?.id; if (editing) await axios.put(`${API}/api/categories/update/${id}`, data, config(true)); else await axios.post(`${API}/api/categories/create`, data, config(true)); toast.success(editing ? "Category updated" : "Category created"); setModal(false); await load(); } catch (e) { toast.error(messageOf(e)); } finally { setBusy(false); } };
+  const deleteCategory = async () => { if (!remove) return; setBusy(true); try { await axios.delete(`${API}/api/categories/delete/${remove._id || remove.id}`, config()); toast.success("Category deleted"); setRemove(null); await load(); } catch (e) { toast.error(messageOf(e)); } finally { setBusy(false); } };
   const panel = dark ? "border-white/10 bg-slate-900/70" : "border-slate-200 bg-white"; const text = dark ? "text-slate-100" : "text-slate-800"; const muted = dark ? "text-slate-400" : "text-slate-500"; const field = `w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-violet-500 ${dark ? "border-white/10 bg-slate-950 text-slate-100" : "border-slate-200 bg-white text-slate-800"}`;
   return <section className={`min-h-[65vh] ${text}`}>
     <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="mb-2 text-xs font-bold uppercase tracking-[.2em] text-violet-500">Store management</p><h1 className="text-2xl font-bold sm:text-3xl">Categories</h1><p className={`mt-1 text-sm ${muted}`}>Create and maintain your product categories.</p></div><div className="flex gap-2"><button onClick={load} className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm ${panel}`}><RefreshCw size={15}/> Refresh</button><button onClick={() => open()} className="flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500"><Plus size={16}/> Add category</button></div></div>
